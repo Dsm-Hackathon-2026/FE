@@ -8,6 +8,14 @@
 - Tailwind CSS 4
 - pnpm
 
+## Delivery model
+
+- 하나의 Next.js 코드베이스를 모바일 우선의 설치형 웹앱(PWA)으로 제공한다.
+- Web App Manifest의 `standalone` 표시 모드를 앱 실행 경계로 사용한다.
+- 별도 홍보 웹사이트나 iOS·Android 네이티브 프로젝트를 유지하지 않는다.
+- 데스크톱 브라우저 지원은 동일한 반응형 웹앱의 호환 범위이며 별도 애플리케이션이 아니다.
+- 서비스 워커가 필요한 오프라인 캐시, 푸시 알림, 백그라운드 동기화는 구체적인 제품 요구사항과 운영 정책이 정해질 때 별도 결정한다.
+
 ## Current structure
 
 ```text
