@@ -66,3 +66,11 @@ body {
   color: #ffffff;
   font-family: "Pretendard Variable", Pretendard, sans-serif;
 }
+
+.app-screen-background {
+  background-color: #101010;
+  background-image: url("/screen-glow.svg");
+  background-repeat: no-repeat;
+  background-position: top center;
+  background-size: clamp(393px, 100%, 920px) 281px;
+}
