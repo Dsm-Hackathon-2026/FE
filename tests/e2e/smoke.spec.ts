@@ -59,7 +59,174 @@ test("애플리케이션 셸과 제품 메타데이터를 제공한다", async (
     .poll(async () => (await landingIntro.boundingBox())?.x ?? -390, { timeout: 4_000 })
     .toBeLessThan(-10);
   await expect(landingIntro).toBeHidden({ timeout: 4_000 });
-  await expect(page.getByRole("heading", { level: 2, name: /어떤 작품 속으로/ })).toBeVisible();
+  const headerLogo = page.getByTestId("header-logo");
+  await expect(headerLogo).toBeVisible();
+  await expect(headerLogo).toHaveCSS("width", "93px");
+  await expect(headerLogo).toHaveCSS("height", "32px");
+  const searchButton = page.getByRole("button", { name: "검색" });
+  await expect(searchButton).toBeVisible();
+  await expect(searchButton).toHaveCSS("width", "44px");
+  await expect(searchButton).toHaveCSS("height", "44px");
+  const searchIcon = page.getByTestId("search-icon");
+  await expect(searchIcon).toHaveCSS("width", "24px");
+  await expect(searchIcon).toHaveCSS("height", "24px");
+  const filterGroup = page.getByRole("group", { name: "작품 유형 필터" });
+  await expect(filterGroup).toBeVisible();
+  const dramaFilter = page.getByRole("button", { name: "드라마" });
+  const movieFilter = page.getByRole("button", { name: "영화" });
+  await expect(dramaFilter).toHaveAttribute("aria-pressed", "true");
+  await expect(movieFilter).toHaveAttribute("aria-pressed", "false");
+  await expect(dramaFilter).toHaveCSS(
+    "font-family",
+    '"Pretendard Variable", Pretendard, sans-serif',
+  );
+  await expect(dramaFilter).toHaveCSS("font-size", "16px");
+  await expect(movieFilter).toHaveCSS("color", "rgb(174, 174, 174)");
+  const filterIndicator = page.getByTestId("filter-indicator");
+  await expect(filterIndicator).toHaveCSS("width", "72px");
+
+  const activeFilterLabelBox = await dramaFilter.locator("[data-filter-label]").boundingBox();
+  const filterIndicatorBox = await filterIndicator.boundingBox();
+
+  if (!activeFilterLabelBox || !filterIndicatorBox) {
+    throw new Error("선택된 필터 글자와 밑줄의 간격을 확인할 수 없습니다.");
+  }
+
+  expect(filterIndicatorBox.y - (activeFilterLabelBox.y + activeFilterLabelBox.height)).toBe(7);
+
+  const headerBox = await page.locator("header").boundingBox();
+  const filterBox = await filterGroup.boundingBox();
+
+  if (!headerBox || !filterBox) {
+    throw new Error("헤더 또는 작품 유형 필터의 위치를 확인할 수 없습니다.");
+  }
+
+  expect(filterBox.y - (headerBox.y + headerBox.height)).toBe(20);
+
+  await movieFilter.click();
+  await expect(movieFilter).toHaveAttribute("aria-pressed", "true");
+  await expect(dramaFilter).toHaveAttribute("aria-pressed", "false");
+  const famousTitle = page.getByRole("heading", {
+    level: 2,
+    name: "명장면이 있는 인기 드라마",
+  });
+  await expect(famousTitle).toBeVisible();
+  await expect(famousTitle).toHaveCSS("font-size", "20px");
+  await expect(famousTitle).toHaveCSS(
+    "font-family",
+    '"Pretendard Variable", Pretendard, sans-serif',
+  );
+  const famousList = page.getByTestId("famous-list");
+  const famousTitleBox = await famousTitle.boundingBox();
+  const famousListBox = await famousList.boundingBox();
+
+  if (!famousTitleBox || !famousListBox) {
+    throw new Error("인기 드라마 제목 또는 목록의 간격을 확인할 수 없습니다.");
+  }
+
+  expect(famousTitleBox.y - (filterBox.y + filterBox.height)).toBe(28);
+  expect(famousListBox.y - (famousTitleBox.y + famousTitleBox.height)).toBe(20);
+  await expect(famousList.getByRole("listitem")).toHaveCount(10);
+  const firstPoster = page.getByRole("img", { name: "1위 도깨비 포스터" });
+  const secondPoster = page.getByRole("img", { name: "2위 사랑의 불시착 포스터" });
+  await expect(firstPoster).toHaveCSS("width", "126px");
+  await expect(firstPoster).toHaveCSS("height", "168px");
+  await expect(secondPoster).toHaveCSS(
+    "width",
+    "105px",
+  );
+  await expect(secondPoster).toHaveCSS(
+    "height",
+    "168px",
+  );
+  await expect(page.getByTestId("famous-rank-1")).toHaveCSS(
+    "font-family",
+    '"Pretendard Variable", Pretendard, sans-serif',
+  );
+  await expect(page.getByTestId("famous-rank-1")).toHaveCSS("font-size", "120px");
+  const firstRankBox = await page.getByTestId("famous-rank-1").boundingBox();
+
+  if (!firstRankBox) {
+    throw new Error("첫 번째 인기 드라마 순위 숫자의 크기를 확인할 수 없습니다.");
+  }
+
+  expect(firstRankBox.width).toBeCloseTo(32, 0);
+  expect(firstRankBox.height).toBeCloseTo(86, 0);
+  const firstPosterBox = await firstPoster.boundingBox();
+  const secondRankBox = await page.getByTestId("famous-rank-2").boundingBox();
+  const secondPosterBox = await secondPoster.boundingBox();
+
+  if (!firstPosterBox || !secondRankBox || !secondPosterBox) {
+    throw new Error("순위 숫자와 포스터 사이의 간격을 확인할 수 없습니다.");
+  }
+
+  expect(firstPosterBox.x - (firstRankBox.x + firstRankBox.width)).toBeCloseTo(20, 0);
+  expect(secondPosterBox.x - (secondRankBox.x + secondRankBox.width)).toBeCloseTo(20, 0);
+  for (let rank = 1; rank <= 10; rank += 1) {
+    const rankBox = await page.getByTestId(`famous-rank-${rank}`).boundingBox();
+    const posterBox = await page.getByTestId(`famous-poster-${rank}`).boundingBox();
+
+    if (!rankBox || !posterBox) {
+      throw new Error(`${rank}위 숫자와 포스터 사이의 간격을 확인할 수 없습니다.`);
+    }
+
+    expect(posterBox.x - (rankBox.x + rankBox.width)).toBeCloseTo(20, 0);
+  }
+  const famousScrollMetrics = await famousList.evaluate((element) => ({
+    clientWidth: element.clientWidth,
+    scrollWidth: element.scrollWidth,
+  }));
+  expect(famousScrollMetrics.scrollWidth).toBeGreaterThan(famousScrollMetrics.clientWidth);
+
+  await famousList.evaluate((element) => {
+    element.scrollLeft = element.scrollWidth;
+  });
+  await expect.poll(() => famousList.evaluate((element) => element.scrollLeft)).toBeGreaterThan(0);
+
+  const recommendedTitle = page.getByRole("heading", { level: 2, name: "추천 드라마" });
+  const recommendedList = page.getByTestId("recommended-dramas-list");
+  const popularSceneTitle = page.getByRole("heading", {
+    level: 2,
+    name: "지금 가장 많이 가는 명장면 드라마",
+  });
+  const popularSceneList = page.getByTestId("popular-scene-dramas-list");
+  await expect(recommendedTitle).toHaveCSS("font-size", "20px");
+  await expect(recommendedTitle).toHaveCSS("font-weight", "700");
+  await expect(recommendedTitle).toHaveCSS(
+    "font-family",
+    '"Pretendard Variable", Pretendard, sans-serif',
+  );
+  await expect(recommendedList.getByRole("listitem")).toHaveCount(8);
+  await expect(popularSceneList.getByRole("listitem")).toHaveCount(8);
+  const recommendedPosters = recommendedList.getByRole("img");
+  await expect(recommendedPosters.first()).toHaveCSS("width", "98px");
+  await expect(recommendedPosters.first()).toHaveCSS("height", "130px");
+
+  const recommendedTitleBox = await recommendedTitle.boundingBox();
+  const recommendedListBox = await recommendedList.boundingBox();
+  const firstRecommendedPosterBox = await recommendedPosters.nth(0).boundingBox();
+  const secondRecommendedPosterBox = await recommendedPosters.nth(1).boundingBox();
+  const popularSceneTitleBox = await popularSceneTitle.boundingBox();
+
+  if (
+    !recommendedTitleBox ||
+    !recommendedListBox ||
+    !firstRecommendedPosterBox ||
+    !secondRecommendedPosterBox ||
+    !popularSceneTitleBox
+  ) {
+    throw new Error("드라마 포스터 캐러셀의 간격을 확인할 수 없습니다.");
+  }
+
+  expect(recommendedListBox.y - (recommendedTitleBox.y + recommendedTitleBox.height)).toBe(20);
+  expect(
+    secondRecommendedPosterBox.x -
+      (firstRecommendedPosterBox.x + firstRecommendedPosterBox.width),
+  ).toBe(12);
+  expect(firstRecommendedPosterBox.x).toBe(24);
+  expect(
+    popularSceneTitleBox.y - (recommendedListBox.y + recommendedListBox.height),
+  ).toBe(28);
   expect(runtimeErrors).toEqual([]);
 
   const manifestResponse = await request.get("/manifest.webmanifest");
