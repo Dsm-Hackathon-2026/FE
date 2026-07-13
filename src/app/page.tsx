@@ -1,12 +1,25 @@
+import { LandingIntro } from "@/features/landing/landing-intro";
+
 export default function Home() {
   return (
-    <main className="grid min-h-dvh place-items-center p-6">
-      <section className="text-center">
-        <h1 className="text-2xl font-semibold">성덕순례</h1>
-        <p className="mt-3 text-sm text-neutral-600">
-          좋아하는 작품의 촬영지를 발견하고 나만의 성지순례를 준비해 보세요.
-        </p>
-      </section>
-    </main>
+    <>
+      <main
+        data-testid="home-screen"
+        className="min-h-dvh bg-[#101010] px-6 pt-[max(2rem,env(safe-area-inset-top))] text-white"
+      >
+        <h1 className="text-lg font-semibold tracking-[-0.02em]">성덕순례</h1>
+
+        <section className="pt-[18vh]">
+          <p className="text-sm font-medium text-[#8c8c8c]">작품 속 장소를 여행하다</p>
+          <h2 className="mt-3 text-[2rem] leading-[1.25] font-semibold tracking-[-0.035em]">
+            어떤 작품 속으로
+            <br />
+            떠나볼까요?
+          </h2>
+        </section>
+      </main>
+
+      <LandingIntro />
+    </>
   );
 }
