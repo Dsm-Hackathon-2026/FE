@@ -10,11 +10,23 @@ test("애플리케이션 셸과 제품 메타데이터를 제공한다", async (
   await expect(page).toHaveTitle("성덕순례");
   await expect(page.getByRole("heading", { level: 1, name: "성덕순례" })).toBeVisible();
   await expect(page.getByTestId("home-screen")).toBeVisible();
+  await expect(page.getByTestId("home-screen")).toHaveCSS(
+    "background-image",
+    /screen-glow\.svg/,
+  );
   const landingIntro = page.getByTestId("landing-intro");
   await expect(landingIntro).toBeVisible();
-  await expect(landingIntro).toHaveCSS("animation-name", "landing-slide-out");
-  await expect(landingIntro).toHaveCSS("animation-duration", "0.7s");
-  await expect(landingIntro).toHaveCSS("animation-delay", "1.8s");
+  await expect(landingIntro).toHaveCSS("animation-name", "landing-intro-exit");
+  await expect(landingIntro).toHaveCSS("animation-duration", "0.52s");
+  await expect(landingIntro).toHaveCSS("animation-delay", "1.5s");
+  const landingBrand = page.getByTestId("landing-brand");
+  await expect(landingBrand).toHaveCSS("animation-name", "landing-brand-in");
+  await expect(landingBrand).toHaveCSS("animation-duration", "0.46s");
+  await expect(landingBrand).toHaveCSS("animation-delay", "0.08s");
+  const landingFeature = page.getByTestId("landing-feature");
+  await expect(landingFeature).toHaveCSS("animation-name", "landing-feature-in");
+  await expect(landingFeature).toHaveCSS("animation-duration", "0.52s");
+  await expect(landingFeature).toHaveCSS("animation-delay", "0.18s");
   const landingIcon = page.getByRole("img", { name: "성덕순례" });
   await expect(landingIcon).toBeVisible();
   await expect(landingIcon).toHaveCSS("width", "200px");
@@ -31,7 +43,7 @@ test("애플리케이션 셸과 제품 메타데이터를 제공한다", async (
   });
   await expect(promotionBanner).toBeVisible();
 
-  const iconBox = await landingIcon.boundingBox();
+  const iconBox = await page.getByTestId("landing-brand-frame").boundingBox();
   const viewport = page.viewportSize();
 
   if (!iconBox || !viewport) {
@@ -43,7 +55,7 @@ test("애플리케이션 셸과 제품 메타데이터를 제공한다", async (
 
   await page.setViewportSize({ width: 390, height: 844 });
 
-  const mobileIconBox = await landingIcon.boundingBox();
+  const mobileIconBox = await page.getByTestId("landing-brand-frame").boundingBox();
 
   if (!mobileIconBox) {
     throw new Error("모바일 뷰포트에서 랜딩 아이콘의 크기를 확인할 수 없습니다.");
@@ -55,18 +67,15 @@ test("애플리케이션 셸과 제품 메타데이터를 제공한다", async (
   await expect(promotionBanner).toHaveCSS("width", "268px");
   await expect(promotionBanner).toHaveCSS("height", "84px");
 
-  await expect
-    .poll(async () => (await landingIntro.boundingBox())?.x ?? -390, { timeout: 4_000 })
-    .toBeLessThan(-10);
-  await expect(landingIntro).toBeHidden({ timeout: 4_000 });
+  await expect(landingIntro).toBeHidden({ timeout: 3_000 });
   const headerLogo = page.getByTestId("header-logo");
   await expect(headerLogo).toBeVisible();
   await expect(headerLogo).toHaveCSS("width", "93px");
   await expect(headerLogo).toHaveCSS("height", "32px");
-  const searchButton = page.getByRole("button", { name: "검색" });
-  await expect(searchButton).toBeVisible();
-  await expect(searchButton).toHaveCSS("width", "44px");
-  await expect(searchButton).toHaveCSS("height", "44px");
+  const searchLink = page.getByRole("link", { name: "검색" });
+  await expect(searchLink).toBeVisible();
+  await expect(searchLink).toHaveCSS("width", "44px");
+  await expect(searchLink).toHaveCSS("height", "44px");
   const searchIcon = page.getByTestId("search-icon");
   await expect(searchIcon).toHaveCSS("width", "24px");
   await expect(searchIcon).toHaveCSS("height", "24px");
@@ -128,7 +137,7 @@ test("애플리케이션 셸과 제품 메타데이터를 제공한다", async (
   expect(famousListBox.y - (famousTitleBox.y + famousTitleBox.height)).toBe(20);
   await expect(famousList.getByRole("listitem")).toHaveCount(10);
   const firstPoster = page.getByRole("img", { name: "1위 도깨비 포스터" });
-  const secondPoster = page.getByRole("img", { name: "2위 사랑의 불시착 포스터" });
+  const secondPoster = page.getByRole("img", { name: "2위 이 사랑 통역되나요? 포스터" });
   await expect(firstPoster).toHaveCSS("width", "126px");
   await expect(firstPoster).toHaveCSS("height", "168px");
   await expect(secondPoster).toHaveCSS(
@@ -250,4 +259,161 @@ test("모션 감소 설정에서는 랜딩 전환을 즉시 완료한다", async
 
   await expect(page.getByTestId("home-screen")).toBeVisible();
   await expect(page.getByTestId("landing-intro")).toBeHidden({ timeout: 1_000 });
+});
+
+test("홈에서 검색 페이지로 이동하고 다시 돌아온다", async ({ page }) => {
+  const runtimeErrors: string[] = [];
+
+  page.on("pageerror", (error) => runtimeErrors.push(error.message));
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/");
+
+  await page.getByRole("link", { name: "검색" }).click();
+  await expect(page).toHaveURL("/search");
+
+  const searchScreen = page.getByTestId("search-screen");
+  const backLink = page.getByRole("link", { name: "뒤로가기" });
+  const homeLink = page.getByRole("link", { name: "홈으로 이동" });
+
+  await expect(searchScreen).toBeVisible();
+  await expect(searchScreen).toHaveCSS("background-image", /screen-glow\.svg/);
+  await expect(searchScreen.locator(":scope > *")).toHaveCount(2);
+  await expect(backLink).toHaveCSS("width", "44px");
+  await expect(backLink).toHaveCSS("height", "44px");
+  await expect(page.getByTestId("back-icon")).toHaveCSS("width", "24px");
+  await expect(page.getByTestId("back-icon")).toHaveCSS("height", "24px");
+  await expect(homeLink).toBeVisible();
+  await expect(page.getByTestId("search-header-logo")).toHaveCSS("width", "93px");
+  await expect(page.getByTestId("search-header-logo")).toHaveCSS("height", "32px");
+  const searchInput = page.getByRole("searchbox", { name: "작품 검색" });
+  await expect(searchInput).toBeVisible();
+  await expect(searchInput).toHaveAttribute("placeholder", "원하는 작품을 검색해주세요 ...");
+  await expect(searchInput).toHaveCSS("font-size", "16px");
+  await expect(searchInput).toHaveCSS("height", "52px");
+  await expect(page.getByTestId("search-input-icon")).toHaveCSS("width", "24px");
+  await expect(page.getByTestId("search-input-icon")).toHaveCSS("height", "24px");
+
+  const searchHeaderBox = await searchScreen.locator("header").boundingBox();
+  const searchInputBox = await searchInput.boundingBox();
+
+  if (!searchHeaderBox || !searchInputBox) {
+    throw new Error("검색 헤더와 검색 입력창의 간격을 확인할 수 없습니다.");
+  }
+
+  expect(searchInputBox.y - (searchHeaderBox.y + searchHeaderBox.height)).toBe(44);
+
+  const recentSearchesTitle = page.getByRole("heading", { level: 2, name: "최근 검색어" });
+  const recentSearches = page.getByTestId("recent-searches");
+  const firstRecentSearch = recentSearches.getByText("나루토");
+
+  await expect(recentSearchesTitle).toHaveCSS("font-size", "20px");
+  await expect(firstRecentSearch).toHaveCSS("font-size", "16px");
+  await expect(recentSearches.getByRole("listitem")).toHaveCount(2);
+
+  const recentSearchesBox = await recentSearches.boundingBox();
+  const recentSearchesTitleBox = await recentSearchesTitle.boundingBox();
+  const firstRecentSearchBox = await firstRecentSearch.boundingBox();
+
+  if (!recentSearchesBox || !recentSearchesTitleBox || !firstRecentSearchBox) {
+    throw new Error("최근 검색어 영역의 간격을 확인할 수 없습니다.");
+  }
+
+  expect(recentSearchesBox.y - (searchInputBox.y + searchInputBox.height)).toBe(36);
+  expect(firstRecentSearchBox.y - (recentSearchesTitleBox.y + recentSearchesTitleBox.height)).toBe(
+    24,
+  );
+
+  const removeNarutoButton = recentSearches.getByRole("button", {
+    name: "나루토 최근 검색어 삭제",
+  });
+  await expect(removeNarutoButton).toHaveCSS("width", "44px");
+  await expect(removeNarutoButton).toHaveCSS("height", "44px");
+  await removeNarutoButton.click();
+  await expect(recentSearches.getByText("나루토")).toBeHidden();
+  await expect(recentSearches.getByRole("listitem")).toHaveCount(1);
+
+  await searchInput.fill("도깨비");
+  await expect(searchInput).toHaveValue("도깨비");
+  await expect(recentSearchesTitle).toBeHidden();
+
+  const searchResultsTitle = page.getByRole("heading", {
+    level: 2,
+    name: "검색어와 관련된 작품",
+  });
+  const searchResultsList = page.getByTestId("search-results-list");
+  const searchResultPosters = searchResultsList.getByRole("img");
+  const clearSearchButton = page.getByRole("button", { name: "검색어 지우기" });
+
+  await expect(searchResultsTitle).toBeVisible();
+  await expect(searchResultsTitle).toHaveCSS("font-size", "20px");
+  await expect(searchResultsList).toHaveAttribute("aria-label", "도깨비 관련 작품 목록");
+  await expect(searchResultsList.getByRole("listitem")).toHaveCount(4);
+  await expect(searchResultPosters.first()).toHaveCSS("width", "107px");
+  await expect(searchResultPosters.first()).toHaveCSS("height", "141px");
+  await expect(clearSearchButton).toHaveCSS("width", "44px");
+  await expect(clearSearchButton).toHaveCSS("height", "44px");
+  await expect(page.getByTestId("search-clear-icon")).toHaveCSS("width", "24px");
+  await expect(page.getByTestId("search-clear-icon")).toHaveCSS("height", "24px");
+
+  const searchResultsTitleBox = await searchResultsTitle.boundingBox();
+  const searchResultsListBox = await searchResultsList.boundingBox();
+  const firstSearchResultBox = await searchResultPosters.nth(0).boundingBox();
+  const secondSearchResultBox = await searchResultPosters.nth(1).boundingBox();
+
+  if (
+    !searchResultsTitleBox ||
+    !searchResultsListBox ||
+    !firstSearchResultBox ||
+    !secondSearchResultBox
+  ) {
+    throw new Error("검색 결과 영역의 간격을 확인할 수 없습니다.");
+  }
+
+  expect(searchResultsTitleBox.y - (searchInputBox.y + searchInputBox.height)).toBe(36);
+  expect(searchResultsListBox.y - (searchResultsTitleBox.y + searchResultsTitleBox.height)).toBe(
+    24,
+  );
+  expect(secondSearchResultBox.x - (firstSearchResultBox.x + firstSearchResultBox.width)).toBe(12);
+
+  const searchResultsScrollMetrics = await searchResultsList.evaluate((element) => ({
+    clientWidth: element.clientWidth,
+    scrollWidth: element.scrollWidth,
+  }));
+  expect(searchResultsScrollMetrics.scrollWidth).toBeGreaterThan(
+    searchResultsScrollMetrics.clientWidth,
+  );
+
+  await clearSearchButton.click();
+  await expect(searchInput).toHaveValue("");
+  await expect(searchInput).toBeFocused();
+  await expect(searchResultsTitle).toBeHidden();
+  await expect(page.getByRole("heading", { level: 2, name: "최근 검색어" })).toBeVisible();
+
+  await searchInput.fill("나루토");
+  await expect(searchResultsTitle).toBeVisible();
+  await expect(searchResultsList).toBeHidden();
+
+  const emptySearchResults = page.getByTestId("empty-search-results");
+  await expect(emptySearchResults).toHaveText("해당하는 작품이 없습니다.");
+  await expect(emptySearchResults).toHaveCSS("font-size", "16px");
+  await expect(emptySearchResults).toHaveCSS("color", "rgb(119, 119, 119)");
+
+  const emptySearchResultsBox = await emptySearchResults.boundingBox();
+
+  if (!emptySearchResultsBox) {
+    throw new Error("검색 결과 없음 안내의 위치를 확인할 수 없습니다.");
+  }
+
+  expect(emptySearchResultsBox.x + emptySearchResultsBox.width / 2).toBeCloseTo(390 / 2, 0);
+  expect(emptySearchResultsBox.y + emptySearchResultsBox.height / 2).toBeCloseTo(844 / 2, 0);
+
+  await backLink.click();
+  await expect(page).toHaveURL("/");
+
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto("/search");
+  await expect(page.getByTestId("search-screen").locator(":scope > *")).toHaveCount(2);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(1280);
+  expect(runtimeErrors).toEqual([]);
 });

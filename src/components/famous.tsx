@@ -7,7 +7,7 @@ const POSTERS = [
     posterWidth: 126,
   },
   {
-    title: "사랑의 불시착",
+    title: "이 사랑 통역되나요?",
     imageSrc: "/famous-drama-2.png",
     posterWidth: 105,
   },

@@ -9,7 +9,7 @@ export default function Home() {
     <>
       <main
         data-testid="home-screen"
-        className="min-h-dvh bg-[#101010] px-6 pt-[max(2rem,env(safe-area-inset-top))] text-white"
+        className="app-screen-background min-h-dvh px-6 pt-[max(2rem,env(safe-area-inset-top))] text-white"
       >
         <Header />
         <div className="mt-5">

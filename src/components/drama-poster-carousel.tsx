@@ -2,13 +2,13 @@ import Image from "next/image";
 
 const DUMMY_POSTERS = [
   { title: "도깨비", imageSrc: "/famous-drama-1.png" },
-  { title: "사랑의 불시착", imageSrc: "/famous-drama-2.png" },
+  { title: "이 사랑 통역되나요?", imageSrc: "/famous-drama-2.png" },
   { title: "도깨비", imageSrc: "/famous-drama-1.png" },
-  { title: "사랑의 불시착", imageSrc: "/famous-drama-2.png" },
+  { title: "이 사랑 통역되나요?", imageSrc: "/famous-drama-2.png" },
   { title: "도깨비", imageSrc: "/famous-drama-1.png" },
-  { title: "사랑의 불시착", imageSrc: "/famous-drama-2.png" },
+  { title: "이 사랑 통역되나요?", imageSrc: "/famous-drama-2.png" },
   { title: "도깨비", imageSrc: "/famous-drama-1.png" },
-  { title: "사랑의 불시착", imageSrc: "/famous-drama-2.png" },
+  { title: "이 사랑 통역되나요?", imageSrc: "/famous-drama-2.png" },
 ] as const;
 
 type DramaPosterCarouselProps = {
