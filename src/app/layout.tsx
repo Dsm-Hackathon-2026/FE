@@ -3,8 +3,9 @@ import type { ReactNode } from "react";
 
 import "./globals.css";
 
-const APP_NAME = "프로젝트 이름";
-const APP_DESCRIPTION = "웹과 모바일에서 사용할 수 있는 웹 애플리케이션";
+const APP_NAME = "성덕순례";
+const APP_DESCRIPTION =
+  "드라마, 영화, 애니메이션의 촬영지를 발견하고 AI로 성지순례 여행 일정을 만들어 보세요.";
 
 export const metadata: Metadata = {
   applicationName: APP_NAME,

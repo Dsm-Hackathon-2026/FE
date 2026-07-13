@@ -1,6 +1,6 @@
-# Web App
+# 성덕순례
 
-웹과 모바일을 하나의 코드베이스로 제공하기 위한 Next.js 기반 프로젝트입니다. 현재는 디자인 작업 전 기본 개발 환경과 PWA 매니페스트만 구성되어 있습니다.
+드라마, 영화, 애니메이션의 촬영지와 배경 장소를 발견하고 AI로 성지순례 일정을 만드는 웹 애플리케이션입니다. 현재는 디자인 작업 전 기본 개발 환경과 에이전트 하네스를 구성하고 있습니다.
 
 ## 선정 기술 스택
 
@@ -32,10 +32,32 @@ pnpm dev
 ## 검사
 
 ```bash
-pnpm lint
-pnpm typecheck
-pnpm build
+pnpm check
+pnpm test:e2e
+pnpm verify
 ```
+
+- `pnpm check`: ESLint와 TypeScript 정적 검사를 실행합니다.
+- `pnpm test:e2e`: Chromium에서 애플리케이션 스모크 테스트를 실행합니다.
+- `pnpm verify`: 정적 검사, 프로덕션 빌드, 브라우저 테스트를 실행하는 최종 완료 조건입니다.
+
+최초 브라우저 테스트 실행 전에 Playwright 브라우저를 설치합니다.
+
+```bash
+pnpm exec playwright install chromium
+```
+
+## 에이전트 작업 환경
+
+이 저장소는 코딩 에이전트가 요구사항을 발견하고 변경을 스스로 검증할 수 있도록 저장소 기반 하네스를 사용합니다.
+
+- 작업 지침: `AGENTS.md`
+- 제품 컨텍스트: `docs/product.md`
+- 도메인 용어: `docs/domain.md`
+- 아키텍처: `docs/architecture.md`
+- 구현 규칙: `docs/conventions.md`
+- 기술 결정: `docs/decisions/`
+- 장기 작업 기록: `docs/tasks/`
 
 ## 디자인 확정 후 할 일
 
