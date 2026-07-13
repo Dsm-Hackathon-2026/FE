@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 
 export function Header() {
   return (
@@ -14,8 +15,8 @@ export function Header() {
         />
       </h1>
 
-      <button
-        type="button"
+      <Link
+        href="/search"
         aria-label="검색"
         className="-mr-2.5 flex size-11 items-center justify-center"
       >
@@ -26,7 +27,7 @@ export function Header() {
           height={24}
           data-testid="search-icon"
         />
-      </button>
+      </Link>
     </header>
   );
 }
