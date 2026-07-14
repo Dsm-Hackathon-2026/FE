@@ -318,6 +318,141 @@ test("홈 포스터에서 작품 상세와 명장면 장소를 확인한다", as
   await expect(page).toHaveURL("/");
 });
 
+test("상세 장소에서 지도 일정으로 이동하고 패널을 조작한다", async ({ page, context }) => {
+  const runtimeErrors: string[] = [];
+
+  page.on("pageerror", (error) => runtimeErrors.push(error.message));
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/detail/goblin");
+
+  await page.getByRole("link", { name: "강릉 영진 해변 지도 일정 보기" }).first().click();
+  await expect(page).toHaveURL(/\/map\/goblin\?location=yeongjin-beach-1/);
+  await expect(page.getByTestId("map-screen")).toBeVisible();
+  const mapSurface = page.locator('[data-testid="kakao-map"], [data-testid="map-preview"]');
+  await expect(mapSurface).toBeVisible();
+
+  const kakaoMap = page.getByTestId("kakao-map");
+  if (await kakaoMap.count()) {
+    await expect(kakaoMap).toHaveAttribute("data-map-ready", "true");
+    const beforeTouchDrag = await kakaoMap.screenshot();
+    const cdp = await context.newCDPSession(page);
+    await cdp.send("Input.dispatchTouchEvent", {
+      type: "touchStart",
+      touchPoints: [{ x: 196, y: 250, id: 1, radiusX: 2, radiusY: 2, force: 1 }],
+    });
+    for (let step = 1; step <= 8; step += 1) {
+      await cdp.send("Input.dispatchTouchEvent", {
+        type: "touchMove",
+        touchPoints: [{
+          x: 196 + (80 * step) / 8,
+          y: 250 + (80 * step) / 8,
+          id: 1,
+          radiusX: 2,
+          radiusY: 2,
+          force: 1,
+        }],
+      });
+    }
+    await page.waitForTimeout(50);
+    const duringTouchDrag = await kakaoMap.screenshot();
+    expect(duringTouchDrag.equals(beforeTouchDrag)).toBe(false);
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+    await page.waitForTimeout(300);
+    const afterTouchDrag = await kakaoMap.screenshot();
+    expect(afterTouchDrag.equals(beforeTouchDrag)).toBe(false);
+  }
+  await expect(page.getByTestId("itinerary-stop-list").getByRole("listitem")).toHaveCount(5);
+  await expect(page.getByRole("heading", { name: "오죽헌" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "강릉 영진 해변" }).first()).toBeVisible();
+  const routeButton = page.getByRole("button", { name: "루트 따라가기" });
+  await expect(routeButton).toBeVisible();
+
+  const sheet = page.getByTestId("itinerary-sheet");
+  const placeCard = page.getByTestId("selected-place-card");
+  await expect(sheet).toHaveAttribute("data-snap", "medium");
+  const mediumHandle = page.getByRole("button", { name: "일정 패널 펼치기" });
+  const mediumHandleBox = await mediumHandle.boundingBox();
+  if (!mediumHandleBox) throw new Error("중간 위치의 일정 패널 핸들을 확인할 수 없습니다.");
+  const mediumHandleX = mediumHandleBox.x + mediumHandleBox.width / 2;
+  const mediumHandleY = mediumHandleBox.y + mediumHandleBox.height / 2;
+  await page.mouse.move(mediumHandleX, mediumHandleY);
+  await page.mouse.down();
+  await page.mouse.move(mediumHandleX, mediumHandleY + 80, { steps: 6 });
+
+  const draggingSheetBox = await sheet.boundingBox();
+  const draggingPlaceCardBox = await placeCard.boundingBox();
+  if (!draggingSheetBox || !draggingPlaceCardBox) {
+    throw new Error("드래그 중 패널과 장소 카드의 위치를 확인할 수 없습니다.");
+  }
+  expect(draggingSheetBox.y - (draggingPlaceCardBox.y + draggingPlaceCardBox.height))
+    .toBeCloseTo(16, 0);
+  await page.mouse.up();
+  await expect(sheet).toHaveAttribute("data-snap", "medium");
+
+  const resetHandleBox = await mediumHandle.boundingBox();
+  if (!resetHandleBox) throw new Error("복귀한 일정 패널 핸들의 위치를 확인할 수 없습니다.");
+  const resetHandleX = resetHandleBox.x + resetHandleBox.width / 2;
+  const resetHandleY = resetHandleBox.y + resetHandleBox.height / 2;
+  await page.mouse.move(resetHandleX, resetHandleY);
+  await page.mouse.down();
+  await page.mouse.move(resetHandleX, -100, { steps: 8 });
+
+  const fullyDraggedSheetBox = await sheet.boundingBox();
+  if (!fullyDraggedSheetBox) throw new Error("완전히 펼친 패널의 위치를 확인할 수 없습니다.");
+  expect(fullyDraggedSheetBox.y).toBeCloseTo(84.4, 0);
+  await expect(placeCard).toHaveCSS("opacity", "0");
+  await page.mouse.up();
+  await expect(sheet).toHaveAttribute("data-snap", "expanded");
+  await expect(placeCard).toHaveCSS("opacity", "0");
+  const sheetHandle = page.getByRole("button", { name: "일정 패널 접기" });
+  await expect(sheetHandle).toBeVisible();
+
+  const handleBox = await sheetHandle.boundingBox();
+  if (!handleBox) throw new Error("일정 패널 드래그 핸들의 위치를 확인할 수 없습니다.");
+  const handleCenterX = handleBox.x + handleBox.width / 2;
+  const handleCenterY = handleBox.y + handleBox.height / 2;
+  await page.mouse.move(handleCenterX, handleCenterY);
+  await page.mouse.down();
+  await page.mouse.move(handleCenterX, 720, { steps: 8 });
+  await page.mouse.up();
+  await expect(sheet).toHaveAttribute("data-snap", "collapsed");
+  await expect(page.getByRole("button", { name: "일정 패널 펼치기" })).toBeVisible();
+
+  const horizontalOverflow = await page.evaluate(
+    () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+  );
+  expect(horizontalOverflow).toBe(0);
+  expect(runtimeErrors).toEqual([]);
+
+  await page.setViewportSize({ width: 768, height: 1024 });
+  await expect(page.getByTestId("map-screen")).toHaveCSS("width", "768px");
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    ),
+  ).toBe(0);
+
+  if (await kakaoMap.count()) {
+    await context.grantPermissions(["geolocation"], { origin: new URL(page.url()).origin });
+    await context.setGeolocation({ latitude: 37.7519, longitude: 128.8761 });
+    await page.emulateMedia({ reducedMotion: "no-preference" });
+    await routeButton.click();
+    await expect(page.getByTestId("route-follow-status")).toContainText("현재 위치에서 출발지로");
+    await expect(page.getByTestId("current-location-marker")).toBeAttached();
+    await expect(page.getByTestId("route-follow-status")).toContainText("출발지 · 강릉역");
+    await expect(sheet).toHaveAttribute("data-snap", "collapsed");
+    await expect(page.getByRole("button", { name: "강릉역에서 시작" })).toBeVisible();
+  } else {
+    await routeButton.click();
+    await expect(page.getByTestId("route-follow-status")).toContainText("지도가 준비된 후");
+  }
+  expect(context.pages()).toHaveLength(1);
+
+  await page.getByRole("link", { name: "작품 상세로 돌아가기" }).click();
+  await expect(page).toHaveURL("/detail/goblin");
+});
+
 test("홈에서 검색 페이지로 이동하고 다시 돌아온다", async ({ page }) => {
   const runtimeErrors: string[] = [];
 
