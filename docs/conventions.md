@@ -12,6 +12,10 @@
 
 - `any`, 불필요한 타입 단언, 검사 비활성화 주석을 피한다.
 - 컴포넌트는 기본적으로 Server Component로 작성한다.
+- React 컴포넌트 export 이름은 `PascalCase`를 사용하고, 컴포넌트 파일명은 `workSummary.tsx`처럼 `lowerCamelCase`를 사용한다.
+- 아이콘 컴포넌트와 이미지·아이콘 자산의 파일명은 `close-icon.tsx`, `back-icon.svg`처럼 `kebab-case`를 사용한다.
+- 데이터, 설정, 유틸리티 등 UI 컴포넌트를 보조하는 모듈은 `work-detail.ts`처럼 `kebab-case`를 사용한다.
+- `page.tsx`, `layout.tsx`, `manifest.ts` 등 프레임워크가 예약한 파일명은 해당 프레임워크 규칙을 우선한다.
 - 파생 가능한 상태를 별도 state로 저장하지 않는다.
 - 접근 가능한 HTML 의미 구조와 키보드 사용을 기본 요구사항으로 취급한다.
 - 사용자 입력과 외부 API 응답은 신뢰하지 않고 경계에서 검증한다.

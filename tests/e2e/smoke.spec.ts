@@ -261,6 +261,63 @@ test("모션 감소 설정에서는 랜딩 전환을 즉시 완료한다", async
   await expect(page.getByTestId("landing-intro")).toBeHidden({ timeout: 1_000 });
 });
 
+test("홈 포스터에서 작품 상세와 명장면 장소를 확인한다", async ({ page }) => {
+  const runtimeErrors: string[] = [];
+
+  page.on("pageerror", (error) => runtimeErrors.push(error.message));
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/");
+
+  await page.getByTestId("famous-poster-1").click();
+  await expect(page).toHaveURL("/detail/goblin");
+
+  const detailScreen = page.getByTestId("work-detail-screen");
+  const backLink = page.getByRole("link", { name: "홈으로 돌아가기" });
+  const poster = page.getByRole("img", { name: "도깨비 포스터" });
+  const description = page.getByTestId("work-description");
+  const descriptionToggle = page.getByRole("button", { name: "더보기" });
+  const locations = page.getByTestId("filming-location-list");
+
+  await expect(detailScreen).toBeVisible();
+  await expect(detailScreen).toHaveCSS("background-image", /detail-screen-glow\.svg/);
+  await expect(detailScreen).toHaveCSS("background-size", "100% 612px");
+  await expect(backLink).toHaveCSS("width", "44px");
+  await expect(backLink).toHaveCSS("height", "44px");
+  await expect(page.getByRole("heading", { level: 1, name: "도깨비" })).toBeVisible();
+  await expect(poster).toHaveCSS("width", "136px");
+  await expect(poster).toHaveCSS("height", "178px");
+  await expect(page.getByRole("list", { name: "작품 정보" }).getByRole("listitem"))
+    .toHaveText(["2016", "드라마", "한국"]);
+  await expect(descriptionToggle).toHaveAttribute("aria-expanded", "false");
+  await expect(description).toHaveCSS("-webkit-line-clamp", "3");
+
+  await descriptionToggle.click();
+  await expect(page.getByRole("button", { name: "접기" })).toHaveAttribute(
+    "aria-expanded",
+    "true",
+  );
+  await expect(description).toContainText("저승사자");
+
+  await expect(
+    page.getByRole("heading", { level: 2, name: "도깨비의 명장면 장소" }),
+  ).toBeVisible();
+  await expect(locations.getByRole("listitem")).toHaveCount(3);
+  await expect(locations.getByRole("heading", { level: 3, name: "강릉 영진 해변" }))
+    .toHaveCount(3);
+  await expect(locations.getByText("강원특별자치도 강릉시 주문진읍 해안로 1609"))
+    .toHaveCount(3);
+
+  const horizontalOverflow = await page.evaluate(
+    () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+  );
+  expect(horizontalOverflow).toBe(0);
+  expect(runtimeErrors).toEqual([]);
+
+  await backLink.click();
+  await expect(page).toHaveURL("/");
+});
+
 test("홈에서 검색 페이지로 이동하고 다시 돌아온다", async ({ page }) => {
   const runtimeErrors: string[] = [];
 

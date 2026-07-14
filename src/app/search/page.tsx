@@ -1,5 +1,5 @@
-import { SearchHeader } from "@/components/search-header";
-import { SearchContent } from "@/features/works/search-content";
+import { SearchHeader } from "@/components/searchHeader";
+import { SearchContent } from "@/features/detail/searchContent";
 
 export default function SearchPage() {
   return (

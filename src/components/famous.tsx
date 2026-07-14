@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 
 const POSTERS = [
   {
@@ -54,19 +55,37 @@ export function Famous() {
               </span>
             </div>
 
-            <div
-              data-testid={`famous-poster-${drama.rank}`}
-              className="relative h-[168px] shrink-0 overflow-hidden"
-              style={{ width: drama.posterWidth }}
-            >
-              <Image
-                src={drama.imageSrc}
-                alt={`${drama.rank}위 ${drama.title} 포스터`}
-                fill
-                sizes={`${drama.posterWidth}px`}
-                className="object-cover"
-              />
-            </div>
+            {drama.title === "도깨비" ? (
+              <Link
+                href="/detail/goblin"
+                aria-label={`${drama.title} 상세 보기`}
+                data-testid={`famous-poster-${drama.rank}`}
+                className="relative h-[168px] shrink-0 overflow-hidden rounded-[3px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                style={{ width: drama.posterWidth }}
+              >
+                <Image
+                  src={drama.imageSrc}
+                  alt={`${drama.rank}위 ${drama.title} 포스터`}
+                  fill
+                  sizes={`${drama.posterWidth}px`}
+                  className="object-cover"
+                />
+              </Link>
+            ) : (
+              <div
+                data-testid={`famous-poster-${drama.rank}`}
+                className="relative h-[168px] shrink-0 overflow-hidden"
+                style={{ width: drama.posterWidth }}
+              >
+                <Image
+                  src={drama.imageSrc}
+                  alt={`${drama.rank}위 ${drama.title} 포스터`}
+                  fill
+                  sizes={`${drama.posterWidth}px`}
+                  className="object-cover"
+                />
+              </div>
+            )}
           </li>
         ))}
       </ol>

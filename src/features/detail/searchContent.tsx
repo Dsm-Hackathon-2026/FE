@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 
-import { RecentSearches } from "@/components/recent-searches";
-import { SearchInput } from "@/components/search-input";
-import { SearchResults } from "@/features/works/search-results";
+import { RecentSearches } from "@/components/recentSearches";
+import { SearchInput } from "@/components/searchInput";
+import { SearchResults } from "@/features/detail/searchResults";
 
 export function SearchContent() {
   const [query, setQuery] = useState("");

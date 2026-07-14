@@ -1,8 +1,8 @@
-import { DramaPosterCarousel } from "@/components/drama-poster-carousel";
+import { DramaPosterCarousel } from "@/components/dramaPosterCarousel";
 import { Filter } from "@/components/filter";
 import { Famous } from "@/components/famous";
 import { Header } from "@/components/header";
-import { LandingIntro } from "@/features/landing/landing-intro";
+import { LandingIntro } from "@/features/landing/landingIntro";
 
 export default function Home() {
   return (
