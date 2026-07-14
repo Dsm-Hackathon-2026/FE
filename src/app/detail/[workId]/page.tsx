@@ -30,6 +30,7 @@ export default async function WorkDetailPage({ params }: WorkDetailPageProps) {
           metadata={GOBLIN_DETAIL.metadata}
         />
         <FilmingLocationList
+          workId={GOBLIN_DETAIL.id}
           workTitle={GOBLIN_DETAIL.title}
           locations={GOBLIN_DETAIL.filmingLocations}
         />
