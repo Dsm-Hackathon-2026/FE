@@ -1,13 +1,14 @@
 import Image from "next/image";
+import Link from "next/link";
 
 const DUMMY_POSTERS = [
-  { title: "도깨비", imageSrc: "/famous-drama-1.png" },
+  { title: "도깨비", imageSrc: "/famous-drama-1.png", href: "/detail/goblin" },
   { title: "이 사랑 통역되나요?", imageSrc: "/famous-drama-2.png" },
-  { title: "도깨비", imageSrc: "/famous-drama-1.png" },
+  { title: "도깨비", imageSrc: "/famous-drama-1.png", href: "/detail/goblin" },
   { title: "이 사랑 통역되나요?", imageSrc: "/famous-drama-2.png" },
-  { title: "도깨비", imageSrc: "/famous-drama-1.png" },
+  { title: "도깨비", imageSrc: "/famous-drama-1.png", href: "/detail/goblin" },
   { title: "이 사랑 통역되나요?", imageSrc: "/famous-drama-2.png" },
-  { title: "도깨비", imageSrc: "/famous-drama-1.png" },
+  { title: "도깨비", imageSrc: "/famous-drama-1.png", href: "/detail/goblin" },
   { title: "이 사랑 통역되나요?", imageSrc: "/famous-drama-2.png" },
 ] as const;
 
@@ -34,13 +35,29 @@ export function DramaPosterCarousel({ id, title }: DramaPosterCarouselProps) {
       >
         {DUMMY_POSTERS.map((poster, index) => (
           <li key={`${poster.title}-${index}`} className="h-[130px] w-[98px] shrink-0 snap-start">
-            <Image
-              src={poster.imageSrc}
-              alt={`${title} ${index + 1}번째 ${poster.title} 포스터`}
-              width={98}
-              height={130}
-              className="h-[130px] w-[98px] object-cover"
-            />
+            {"href" in poster ? (
+              <Link
+                href={poster.href}
+                aria-label={`${poster.title} 상세 보기`}
+                className="block rounded-[3px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+              >
+                <Image
+                  src={poster.imageSrc}
+                  alt={`${title} ${index + 1}번째 ${poster.title} 포스터`}
+                  width={98}
+                  height={130}
+                  className="h-[130px] w-[98px] object-cover"
+                />
+              </Link>
+            ) : (
+              <Image
+                src={poster.imageSrc}
+                alt={`${title} ${index + 1}번째 ${poster.title} 포스터`}
+                width={98}
+                height={130}
+                className="h-[130px] w-[98px] object-cover"
+              />
+            )}
           </li>
         ))}
       </ol>
