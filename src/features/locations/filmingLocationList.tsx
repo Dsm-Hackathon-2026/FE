@@ -1,13 +1,16 @@
 import Image from "next/image";
+import Link from "next/link";
 
 import type { FilmingLocation } from "@/features/detail/detail";
 
 type FilmingLocationListProps = {
+  workId: string;
   workTitle: string;
   locations: readonly FilmingLocation[];
 };
 
 export function FilmingLocationList({
+  workId,
   workTitle,
   locations,
 }: FilmingLocationListProps) {
@@ -23,7 +26,11 @@ export function FilmingLocationList({
       <ol className="mt-6 flex flex-col gap-8" data-testid="filming-location-list">
         {locations.map((location) => (
           <li key={location.id}>
-            <article className="grid grid-cols-[124px_minmax(0,1fr)] items-center gap-3.5 sm:grid-cols-[144px_minmax(0,1fr)] sm:gap-5">
+            <Link
+              href={`/map/${encodeURIComponent(workId)}?location=${encodeURIComponent(location.id)}`}
+              aria-label={`${location.name} 지도 일정 보기`}
+              className="grid grid-cols-[124px_minmax(0,1fr)] items-center gap-3.5 rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white sm:grid-cols-[144px_minmax(0,1fr)] sm:gap-5"
+            >
               <div className="relative h-[84px] overflow-hidden rounded-[3px]">
                 <Image
                   src={location.imageSrc}
@@ -42,7 +49,7 @@ export function FilmingLocationList({
                   {location.address}
                 </address>
               </div>
-            </article>
+            </Link>
           </li>
         ))}
       </ol>

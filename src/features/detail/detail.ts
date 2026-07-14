@@ -4,6 +4,10 @@ export type FilmingLocation = {
   address: string;
   imageSrc: string;
   imageAlt: string;
+  coordinates: {
+    latitude: number;
+    longitude: number;
+  };
 };
 
 export type WorkDetail = {
@@ -22,6 +26,7 @@ const GOBLIN_LOCATIONS = [
     address: "강원특별자치도 강릉시 주문진읍 해안로 1609",
     imageSrc: "/gangneung-yeongjin-beach.png",
     imageAlt: "바다를 향해 이어진 강릉 영진 해변 방파제",
+    coordinates: { latitude: 37.8691, longitude: 128.8486 },
   },
   {
     id: "yeongjin-beach-2",
@@ -29,6 +34,7 @@ const GOBLIN_LOCATIONS = [
     address: "강원특별자치도 강릉시 주문진읍 해안로 1609",
     imageSrc: "/gangneung-yeongjin-beach.png",
     imageAlt: "푸른 바다와 강릉 영진 해변 방파제",
+    coordinates: { latitude: 37.8691, longitude: 128.8486 },
   },
   {
     id: "yeongjin-beach-3",
@@ -36,6 +42,7 @@ const GOBLIN_LOCATIONS = [
     address: "강원특별자치도 강릉시 주문진읍 해안로 1609",
     imageSrc: "/gangneung-yeongjin-beach.png",
     imageAlt: "강릉 영진 해변의 잔잔한 수평선과 방파제",
+    coordinates: { latitude: 37.8691, longitude: 128.8486 },
   },
 ] as const satisfies readonly FilmingLocation[];
 
