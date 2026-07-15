@@ -7,12 +7,7 @@ import { WorkSummary } from "@/features/detail/detailSummary";
 import { FilmingLocationList } from "@/features/locations/filmingLocationList";
 import { buildRegionalCourses } from "@/features/locations/regional-course";
 import { RegionalCourseList } from "@/features/locations/regionalCourseList";
-
-const CONTENT_TYPE_LABEL = {
-  DRAMA: "드라마",
-  MOVIE: "영화",
-  ANIMATION: "애니메이션",
-} as const;
+import { useI18n } from "@/i18n/provider";
 
 export function WorkDetailScreen({
   appKey,
@@ -21,15 +16,16 @@ export function WorkDetailScreen({
   appKey?: string;
   contentId: number;
 }) {
+  const { t } = useI18n();
   const detail = useContentDetail(contentId);
   const spots = useSpots(contentId);
 
   if (detail.isPending || spots.isPending) {
-    return <DetailState role="status">작품 정보를 불러오는 중...</DetailState>;
+    return <DetailState role="status">{t("detail.loading")}</DetailState>;
   }
 
   if (detail.isError || spots.isError) {
-    return <DetailState role="alert">작품 정보를 불러오지 못했습니다.</DetailState>;
+    return <DetailState role="alert">{t("detail.error")}</DetailState>;
   }
 
   return (
@@ -45,7 +41,7 @@ export function WorkDetailScreen({
           posterSrc={detail.data.thumbnailUrl}
           metadata={[
             String(detail.data.releaseYear),
-            CONTENT_TYPE_LABEL[detail.data.contentType],
+            { DRAMA: t("filter.drama"), MOVIE: t("filter.movie"), ANIMATION: t("filter.animation") }[detail.data.contentType],
             detail.data.country,
           ]}
         />
@@ -63,7 +59,7 @@ export function WorkDetailScreen({
             name: spot.name,
             address: spot.address,
             imageSrc: spot.imageUrl,
-            imageAlt: `${spot.name} 전경`,
+            imageAlt: t("detail.imageAlt", { name: spot.name }),
             latitude: spot.latitude,
             longitude: spot.longitude,
           }))}

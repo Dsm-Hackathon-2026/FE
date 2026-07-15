@@ -1,7 +1,11 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
 
 import type { VerificationResultResponse } from "@/api/verifications/type";
+import { LanguageSwitcher } from "@/components/languageSwitcher";
+import { useI18n } from "@/i18n/provider";
 
 type VerificationResultScreenProps = {
   mapHref: string;
@@ -12,6 +16,7 @@ export function VerificationResultScreen({
   mapHref,
   result,
 }: VerificationResultScreenProps) {
+  const { t } = useI18n();
   return (
     <main
       data-testid="verification-result-screen"
@@ -20,24 +25,26 @@ export function VerificationResultScreen({
       <div className="mx-auto w-full max-w-3xl px-5 pt-[max(0.75rem,env(safe-area-inset-top))] pb-[max(2rem,env(safe-area-inset-bottom))] sm:px-8">
         <Link
           href={mapHref}
-          aria-label="지도 일정으로 돌아가기"
+          aria-label={t("camera.backMap")}
           className="flex size-12 items-center justify-center rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
         >
           <Image src="/back-icon.svg" alt="" width={32} height={32} priority />
         </Link>
 
-        <h1 className="sr-only">{result.spotName} 방문 인증 결과</h1>
+        <div className="absolute top-[max(1.25rem,env(safe-area-inset-top))] right-5"><LanguageSwitcher /></div>
+
+        <h1 className="sr-only">{t("verification.title", { name: result.spotName })}</h1>
         <div className="mt-8 flex flex-col gap-8 sm:mt-10 sm:gap-10">
           <VerificationImage
-            alt={`${result.spotName} 작품 속 명장면`}
-            label={`${result.spotName} 드라마 명장면`}
+            alt={t("verification.sceneAlt", { name: result.spotName })}
+            label={t("verification.scene", { name: result.spotName })}
             priority
             src={result.sceneImageUrl}
             testId="scene-image"
           />
           <VerificationImage
-            alt={`${result.spotName}에서 내가 찍은 인증 사진`}
-            label={`${result.spotName} 내가 찍은 명장면`}
+            alt={t("verification.photoAlt", { name: result.spotName })}
+            label={t("verification.photo", { name: result.spotName })}
             src={result.verificationImageUrl}
             testId="verification-image"
           />

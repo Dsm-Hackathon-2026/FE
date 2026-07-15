@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 
+import { LanguageSwitcher } from "@/components/languageSwitcher";
 import { spotKeys } from "@/api/spots";
 import { useVerifyVisit } from "@/api/verifications";
 import type { VerificationResultResponse } from "@/api/verifications/type";
@@ -12,6 +13,7 @@ import { VerificationResultScreen } from "@/features/camera/verificationResultSc
 import type { ItineraryStop } from "@/features/itineraries/itinerary";
 import { getCurrentCoordinates } from "@/features/map/kakao-map";
 import { saveVisitRecord } from "@/features/visits/visit-record";
+import { useI18n, type Translate } from "@/i18n/provider";
 
 type CameraScreenProps = {
   planId: string;
@@ -31,15 +33,8 @@ type CameraStatus =
 
 type FacingMode = "environment" | "user";
 
-const CAMERA_STATUS_MESSAGE: Partial<Record<CameraStatus, string>> = {
-  requesting: "카메라를 준비하고 있어요",
-  verifying: "현재 위치와 사진을 인증하고 있어요",
-  unsupported: "이 브라우저에서는 카메라를 사용할 수 없습니다.",
-  denied: "촬영하려면 브라우저의 카메라 권한을 허용해 주세요.",
-  error: "카메라를 시작하지 못했습니다. 잠시 후 다시 시도해 주세요.",
-};
-
 export function CameraScreen({ planId, spotId, stop, workId }: CameraScreenProps) {
+  const { t } = useI18n();
   const queryClient = useQueryClient();
   const verification = useVerifyVisit();
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -160,7 +155,7 @@ export function CameraScreen({ planId, spotId, stop, workId }: CameraScreenProps
 
       if (result.status === "FAIL") {
         setStatus("captured");
-        setSaveError("촬영지 200m 이내에서 인증해 주세요.");
+        setSaveError(t("camera.tooFar"));
         return;
       }
 
@@ -186,7 +181,7 @@ export function CameraScreen({ planId, spotId, stop, workId }: CameraScreenProps
       setVerificationResult(result);
     } catch (error) {
       setStatus("captured");
-      setSaveError(verificationErrorMessage(error));
+      setSaveError(verificationErrorMessage(error, t));
     }
   };
 
@@ -200,7 +195,7 @@ export function CameraScreen({ planId, spotId, stop, workId }: CameraScreenProps
       className="mx-auto flex h-dvh min-h-[640px] w-full max-w-3xl flex-col overflow-hidden bg-black px-0 pt-[max(0.75rem,env(safe-area-inset-top))] pb-[max(0.75rem,env(safe-area-inset-bottom))] text-white"
     >
       <section
-        aria-label={`${stop.name} 방문 촬영 화면`}
+        aria-label={t("camera.screen", { name: stop.name })}
         className="relative min-h-0 flex-1 overflow-hidden rounded-[44px] bg-[#171717]"
       >
         <video
@@ -214,7 +209,7 @@ export function CameraScreen({ planId, spotId, stop, workId }: CameraScreenProps
         {photoDataUrl ? (
           <Image
             src={photoDataUrl}
-            alt={`${stop.name}에서 촬영한 방문 사진`}
+            alt={t("camera.photoAlt", { name: stop.name })}
             fill
             unoptimized
             data-testid="captured-photo"
@@ -225,20 +220,22 @@ export function CameraScreen({ planId, spotId, stop, workId }: CameraScreenProps
         <div className="pointer-events-none absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/55 to-transparent" />
         <Link
           href={mapHref}
-          aria-label="지도 일정으로 돌아가기"
+          aria-label={t("camera.backMap")}
           className="absolute top-5 left-4 z-20 flex size-12 items-center justify-center rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
         >
           <Image src="/back-icon.svg" alt="" width={32} height={32} priority />
         </Link>
 
-        {CAMERA_STATUS_MESSAGE[status] ? (
+        <div className="absolute top-7 right-5 z-20"><LanguageSwitcher /></div>
+
+        {cameraStatusMessage(status, t) ? (
           <div className="absolute inset-0 z-10 grid place-items-center bg-black/45 px-8 text-center backdrop-blur-[2px]">
             <div>
               <p
                 role={["requesting", "verifying"].includes(status) ? "status" : "alert"}
                 className="text-sm leading-6 text-white"
               >
-                {CAMERA_STATUS_MESSAGE[status]}
+                {cameraStatusMessage(status, t)}
               </p>
               {["denied", "error"].includes(status) ? (
                 <button
@@ -246,7 +243,7 @@ export function CameraScreen({ planId, spotId, stop, workId }: CameraScreenProps
                   onClick={() => setRestartSequence((sequence) => sequence + 1)}
                   className="mt-4 min-h-11 rounded-full border border-white/40 px-5 text-sm font-semibold"
                 >
-                  다시 시도
+                  {t("common.retry")}
                 </button>
               ) : null}
             </div>
@@ -259,7 +256,7 @@ export function CameraScreen({ planId, spotId, stop, workId }: CameraScreenProps
           <>
             <button
               type="button"
-              aria-label="사진 촬영"
+              aria-label={t("camera.capture")}
               onClick={capturePhoto}
               className="absolute top-0 left-1/2 z-20 flex size-[70px] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-[3px] border-white bg-black shadow-[0_8px_0_rgba(0,0,0,0.75)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
             >
@@ -267,7 +264,7 @@ export function CameraScreen({ planId, spotId, stop, workId }: CameraScreenProps
             </button>
             <button
               type="button"
-              aria-label="전면 후면 카메라 전환"
+              aria-label={t("camera.flip")}
               onClick={() => setFacingMode((mode) => mode === "environment" ? "user" : "environment")}
               className="absolute top-1/2 right-3 flex size-11 -translate-y-1/2 items-center justify-center rounded-full border-[3px] border-black bg-[#393939] text-[#9b9b9b] shadow-[0_0_0_1px_rgba(255,255,255,0.3)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
             >
@@ -281,19 +278,19 @@ export function CameraScreen({ planId, spotId, stop, workId }: CameraScreenProps
               onClick={retakePhoto}
               className="min-h-12 flex-1 rounded-xl border border-white/25 text-sm font-semibold text-white"
             >
-              다시 촬영
+              {t("camera.retake")}
             </button>
             <button
               type="button"
               onClick={() => void verifyPhoto()}
               className="min-h-12 flex-[1.3] rounded-xl bg-white text-sm font-bold text-black"
             >
-              인증하기
+              {t("camera.verify")}
             </button>
           </div>
         ) : (
           <p className="grid h-full place-items-center text-center text-[13px] leading-5 text-[#8f8b8c]">
-            카메라가 준비되면 촬영 버튼이 표시됩니다.
+            {t("camera.readyHint")}
           </p>
         )}
         {saveError ? (
@@ -315,13 +312,24 @@ async function photoDataUrlToFile(photoDataUrl: string) {
   });
 }
 
-function verificationErrorMessage(error: unknown) {
+function verificationErrorMessage(error: unknown, t: Translate) {
   if (typeof error === "object" && error !== null && "code" in error) {
     const code = (error as { code?: unknown }).code;
-    if (code === 1) return "방문 인증을 위해 위치 권한을 허용해 주세요.";
-    if (code === 2 || code === 3) return "현재 위치를 확인하지 못했습니다. 다시 시도해 주세요.";
+    if (code === 1) return t("camera.locationPermission");
+    if (code === 2 || code === 3) return t("camera.locationError");
   }
-  return "방문 인증에 실패했습니다. 잠시 후 다시 시도해 주세요.";
+  return t("camera.verifyError");
+}
+
+function cameraStatusMessage(status: CameraStatus, t: Translate) {
+  const messages: Partial<Record<CameraStatus, string>> = {
+    requesting: t("camera.requesting"),
+    verifying: t("camera.verifying"),
+    unsupported: t("camera.unsupported"),
+    denied: t("camera.denied"),
+    error: t("camera.error"),
+  };
+  return messages[status];
 }
 
 function FlipCameraIcon() {

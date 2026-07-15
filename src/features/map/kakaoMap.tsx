@@ -9,6 +9,7 @@ import {
   loadKakaoMaps,
   mountKakaoItineraryMap,
 } from "@/features/map/kakao-map";
+import { useI18n } from "@/i18n/provider";
 
 type KakaoMapProps = {
   appKey?: string;
@@ -46,6 +47,7 @@ function toPreviewPoints(stops: readonly ItineraryStop[]) {
 }
 
 function MapPreview({ onManualInteraction, stops }: KakaoMapProps) {
+  const { t } = useI18n();
   const points = toPreviewPoints(stops);
   const path = points.map((point) => `${point.x},${point.y}`).join(" ");
 
@@ -53,7 +55,7 @@ function MapPreview({ onManualInteraction, stops }: KakaoMapProps) {
     <div
       className="map-preview"
       data-testid="map-preview"
-      aria-label="지도 미리보기"
+      aria-label={t("map.preview")}
       onPointerDownCapture={onManualInteraction}
       onWheelCapture={onManualInteraction}
     >
@@ -71,7 +73,7 @@ function MapPreview({ onManualInteraction, stops }: KakaoMapProps) {
             top: `${point.y}%`,
             "--pin-color": PIN_COLORS[index] ?? PIN_COLORS[1],
           } as React.CSSProperties}
-          aria-label={`${index + 1}번째 장소 ${stops[index].name}`}
+          aria-label={t("map.placeNumber", { index: index + 1, name: stops[index].name })}
         >
           {index === 0 ? "" : index}
         </span>
@@ -80,7 +82,7 @@ function MapPreview({ onManualInteraction, stops }: KakaoMapProps) {
         강릉
       </p>
       <span className="absolute top-[12%] right-4 rounded bg-white/80 px-2 py-1 text-[10px] font-semibold text-[#4b5a58]">
-        지도 개발 미리보기
+        {t("map.previewBadge")}
       </span>
     </div>
   );
@@ -90,6 +92,7 @@ export const KakaoMap = forwardRef<KakaoMapHandle, KakaoMapProps>(function Kakao
   { appKey, onManualInteraction, stops },
   ref,
 ) {
+  const { t } = useI18n();
   const mapRef = useRef<HTMLDivElement>(null);
   const controllerRef = useRef<KakaoItineraryMapController | null>(null);
   const [loadFailed, setLoadFailed] = useState(false);
@@ -151,7 +154,7 @@ export const KakaoMap = forwardRef<KakaoMapHandle, KakaoMapProps>(function Kakao
       className="kakao-map size-full touch-none"
       data-testid="kakao-map"
       data-map-ready={mapReady}
-      aria-label="일정 지도"
+      aria-label={t("map.itinerary")}
       onPointerDownCapture={onManualInteraction}
       onWheelCapture={onManualInteraction}
     />

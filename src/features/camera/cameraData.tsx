@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import type { ItineraryStop } from "@/features/itineraries/itinerary";
 import { readRoutePlan } from "@/features/itineraries/route-plan";
 import { CameraScreen } from "@/features/camera/cameraScreen";
+import { useI18n } from "@/i18n/provider";
 
 type CameraDataProps = {
   contentId: number;
@@ -14,6 +15,7 @@ type CameraDataProps = {
 };
 
 export function CameraData({ contentId, planId, stopId }: CameraDataProps) {
+  const { t } = useI18n();
   const [stop, setStop] = useState<ItineraryStop | null>();
 
   useEffect(() => {
@@ -25,18 +27,18 @@ export function CameraData({ contentId, planId, stopId }: CameraDataProps) {
   }, [contentId, planId, stopId]);
 
   if (stop === undefined) {
-    return <CameraState role="status">촬영 장소를 불러오는 중...</CameraState>;
+    return <CameraState role="status">{t("camera.loading")}</CameraState>;
   }
 
   if (!stop || !planId || !stopId || stop.kind !== "filming-location") {
     return (
       <CameraState role="alert">
-        촬영할 명장면 장소를 찾지 못했습니다.
+        {t("camera.missing")}
         <Link
           href={`/detail/${contentId}`}
           className="mt-4 min-h-11 text-sm underline underline-offset-4"
         >
-          작품 상세로 돌아가기
+          {t("camera.backDetail")}
         </Link>
       </CameraState>
     );
@@ -46,12 +48,12 @@ export function CameraData({ contentId, planId, stopId }: CameraDataProps) {
   if (!Number.isSafeInteger(spotId) || spotId <= 0) {
     return (
       <CameraState role="alert">
-        방문 인증할 촬영지 정보를 확인하지 못했습니다.
+        {t("camera.invalidSpot")}
         <Link
           href={`/detail/${contentId}`}
           className="mt-4 min-h-11 text-sm underline underline-offset-4"
         >
-          작품 상세로 돌아가기
+          {t("camera.backDetail")}
         </Link>
       </CameraState>
     );

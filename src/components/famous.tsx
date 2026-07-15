@@ -1,7 +1,10 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
 
 import type { ContentSummaryResponse } from "@/api/contents/type";
+import { useI18n } from "@/i18n/provider";
 
 const RANK_WIDTHS = [32, 41, 43, 45, 42.5, 43.5, 39, 44, 43.5, 73] as const;
 
@@ -13,24 +16,25 @@ type FamousProps = {
 };
 
 export function Famous({ title, contents = [], isLoading = false, isError = false }: FamousProps) {
+  const { t } = useI18n();
   return (
     <section aria-labelledby="famous-title">
       <h2
         id="famous-title"
         className="font-sans text-xl leading-7 font-semibold tracking-[-0.025em] text-white"
       >
-        명장면이 있는 인기 {title}
+        {t("home.famous", { type: title })}
       </h2>
 
       {isLoading ? (
-        <p role="status" className="mt-5 text-sm text-[#aeaeae]">불러오는 중...</p>
+        <p role="status" className="mt-5 text-sm text-[#aeaeae]">{t("common.loading")}</p>
       ) : isError ? (
-        <p role="alert" className="mt-5 text-sm text-[#aeaeae]">인기 작품을 불러오지 못했습니다.</p>
+        <p role="alert" className="mt-5 text-sm text-[#aeaeae]">{t("home.famousError")}</p>
       ) : contents.length === 0 ? (
-        <p role="status" className="mt-5 text-sm text-[#aeaeae]">표시할 작품이 없습니다.</p>
+        <p role="status" className="mt-5 text-sm text-[#aeaeae]">{t("common.emptyWorks")}</p>
       ) : <ol
         data-testid="famous-list"
-        aria-label="인기 드라마 순위"
+        aria-label={t("home.ranking", { type: title })}
         tabIndex={0}
         className="mt-5 -mx-6 flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain scroll-smooth px-6 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
@@ -50,14 +54,14 @@ export function Famous({ title, contents = [], isLoading = false, isError = fals
 
             <Link
                 href={`/detail/${content.contentId}`}
-                aria-label={`${content.title} 상세 보기`}
+                aria-label={t("common.workDetail", { title: content.title })}
                 data-testid={`famous-poster-${rank}`}
                 className="relative h-[168px] shrink-0 overflow-hidden rounded-[3px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
                 style={{ width: posterWidth }}
               >
                 <Image
                   src={content.thumbnailUrl}
-                  alt={`${rank}위 ${content.title} 포스터`}
+                  alt={t("home.rankPoster", { rank, title: content.title })}
                   fill
                   sizes={`${posterWidth}px`}
                   className="object-cover"

@@ -4,6 +4,7 @@ import Image from "next/image";
 import { type ChangeEventHandler, useRef } from "react";
 
 import { CloseIcon } from "@/components/close-icon";
+import { useI18n } from "@/i18n/provider";
 
 type SearchInputProps = {
   value: string;
@@ -12,6 +13,7 @@ type SearchInputProps = {
 };
 
 export function SearchInput({ value, onChange, onClear }: SearchInputProps) {
+  const { t } = useI18n();
   const inputRef = useRef<HTMLInputElement>(null);
 
   const clearInput = () => {
@@ -21,7 +23,7 @@ export function SearchInput({ value, onChange, onClear }: SearchInputProps) {
 
   return (
     <label className="relative block">
-      <span className="sr-only">작품 검색</span>
+      <span className="sr-only">{t("search.label")}</span>
       <Image
         src="/search-icon.svg"
         alt=""
@@ -36,7 +38,7 @@ export function SearchInput({ value, onChange, onClear }: SearchInputProps) {
         name="query"
         value={value}
         onChange={onChange}
-        placeholder="원하는 작품을 검색해주세요 ..."
+        placeholder={t("search.placeholder")}
         autoComplete="off"
         enterKeyHint="search"
         aria-controls={value.trim() ? "search-results" : undefined}
@@ -45,7 +47,7 @@ export function SearchInput({ value, onChange, onClear }: SearchInputProps) {
       {value ? (
         <button
           type="button"
-          aria-label="검색어 지우기"
+          aria-label={t("search.clear")}
           className="absolute top-1/2 right-0 flex size-11 -translate-y-1/2 items-center justify-end focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-white"
           onClick={clearInput}
         >

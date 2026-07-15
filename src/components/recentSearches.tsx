@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 import { CloseIcon } from "@/components/close-icon";
+import { useI18n } from "@/i18n/provider";
 
 const DEFAULT_RECENT_SEARCHES = [
   { id: "naruto", label: "나루토" },
@@ -10,6 +11,7 @@ const DEFAULT_RECENT_SEARCHES = [
 ] as const;
 
 export function RecentSearches() {
+  const { t } = useI18n();
   const [searches, setSearches] = useState<
     readonly { id: string; label: string }[]
   >(DEFAULT_RECENT_SEARCHES);
@@ -27,7 +29,7 @@ export function RecentSearches() {
   return (
     <section aria-labelledby="recent-searches-title" data-testid="recent-searches">
       <h2 id="recent-searches-title" className="text-xl leading-7 font-bold">
-        최근 검색어
+        {t("search.recent")}
       </h2>
 
       <ul className="mt-6 flex flex-col gap-6">
@@ -36,7 +38,7 @@ export function RecentSearches() {
             <span className="block text-base leading-6 font-normal">{search.label}</span>
             <button
               type="button"
-              aria-label={`${search.label} 최근 검색어 삭제`}
+              aria-label={t("search.removeRecent", { label: search.label })}
               className="absolute -top-2.5 right-0 flex size-11 items-center justify-end focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-white"
               onClick={() => removeSearch(search.id)}
             >

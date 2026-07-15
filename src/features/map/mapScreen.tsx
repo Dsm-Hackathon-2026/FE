@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
+import { LanguageSwitcher } from "@/components/languageSwitcher";
 import type { Itinerary, ItineraryStop } from "@/features/itineraries/itinerary";
 import type { MapCoordinates } from "@/features/map/kakao-map";
 import { type KakaoMapHandle, KakaoMap } from "@/features/map/kakaoMap";
@@ -15,6 +16,7 @@ import {
   OFF_ROUTE_CONFIRMATION_COUNT,
   OFF_ROUTE_THRESHOLD_METERS,
 } from "@/features/map/route-following";
+import { useI18n } from "@/i18n/provider";
 
 type MapScreenProps = {
   appKey?: string;
@@ -92,6 +94,7 @@ function SelectedPlaceCard({ stop, isHidden }: { stop: ItineraryStop; isHidden: 
 }
 
 export function MapScreen({ appKey, itinerary, initialStopId, planId, workId }: MapScreenProps) {
+  const { locale, t } = useI18n();
   const initialStop = itinerary.stops.find((stop) => stop.id === initialStopId);
   const [followStatus, setFollowStatus] = useState<FollowStatus>("idle");
   const [activeStopIndex, setActiveStopIndex] = useState(0);
@@ -127,7 +130,7 @@ export function MapScreen({ appKey, itinerary, initialStopId, planId, workId }: 
     if (voiceEnabledRef.current && "speechSynthesis" in window) {
       window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(message);
-      utterance.lang = "ko-KR";
+      utterance.lang = locale === "en" ? "en-US" : "ko-KR";
       window.speechSynthesis.speak(utterance);
     }
     if (vibrationEnabledRef.current && "vibrate" in navigator) {
@@ -151,7 +154,7 @@ export function MapScreen({ appKey, itinerary, initialStopId, planId, workId }: 
     cameraFollowingRef.current = false;
     updateFollowStatus("completed");
     setDistanceToNext(null);
-    announce("추천 일정의 모든 장소에 도착했습니다.", [100, 80, 180]);
+    announce(t("map.arrivedAll"), [100, 80, 180]);
   };
 
   const handlePosition = ({ coords }: GeolocationPosition) => {
@@ -164,7 +167,7 @@ export function MapScreen({ appKey, itinerary, initialStopId, planId, workId }: 
 
     if (nextIndex > previousIndex) {
       const arrivedStop = itinerary.stops[Math.min(nextIndex - 1, itinerary.stops.length - 1)];
-      announce(`${arrivedStop.name}에 도착했습니다.`, [90, 60, 90]);
+      announce(t("map.arrived", { name: arrivedStop.name }), [90, 60, 90]);
       activeStopIndexRef.current = nextIndex;
       setActiveStopIndex(nextIndex);
       reroutedRef.current = false;
@@ -194,7 +197,7 @@ export function MapScreen({ appKey, itinerary, initialStopId, planId, workId }: 
         reroutedRef.current = true;
         offRouteCountRef.current = 0;
         updateFollowStatus("rerouting");
-        announce("경로를 벗어나 다음 장소까지 경로를 다시 표시합니다.", [180, 80, 180]);
+        announce(t("map.rerouteSpeech"), [180, 80, 180]);
         rerouteTimerRef.current = window.setTimeout(() => {
           updateFollowStatus(cameraFollowingRef.current ? "following" : "paused");
           rerouteTimerRef.current = null;
@@ -205,7 +208,7 @@ export function MapScreen({ appKey, itinerary, initialStopId, planId, workId }: 
     mapRef.current?.updateRouteProgress(nextIndex, coordinates, reroutedRef.current);
     if (followStatusRef.current === "locating") {
       updateFollowStatus("following");
-      announce(`${target.name}까지 따라가기를 시작합니다.`);
+      announce(t("map.followStart", { name: target.name }));
     }
   };
 
@@ -296,12 +299,12 @@ export function MapScreen({ appKey, itinerary, initialStopId, planId, workId }: 
 
   const followMessage = {
     idle: null,
-    locating: "현재 위치를 확인하고 있어요",
-    following: "현재 위치를 따라 안내 중이에요",
-    paused: "지도를 살펴보는 동안 화면 따라가기를 멈췄어요",
-    rerouting: "경로를 벗어나 다음 장소까지 다시 표시하고 있어요",
-    completed: "추천 일정의 모든 장소에 도착했어요",
-    "location-unavailable": `현재 위치를 확인하지 못해 ${itinerary.stops[0].name}을 표시했어요`,
+    locating: t("map.status.locating"),
+    following: t("map.status.following"),
+    paused: t("map.status.paused"),
+    rerouting: t("map.status.rerouting"),
+    completed: t("map.status.completed"),
+    "location-unavailable": t("map.status.unavailable", { name: itinerary.stops[0].name }),
   }[followStatus];
   const nextStop = activeStopIndex < itinerary.stops.length
     ? itinerary.stops[activeStopIndex]
@@ -359,11 +362,14 @@ export function MapScreen({ appKey, itinerary, initialStopId, planId, workId }: 
       <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-32 bg-gradient-to-b from-black/45 to-transparent" />
       <Link
         href={`/detail/${workId}`}
-        aria-label="작품 상세로 돌아가기"
+        aria-label={t("map.backDetail")}
         className="absolute top-[max(1rem,env(safe-area-inset-top))] left-2.5 z-20 flex size-11 items-center justify-center rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
       >
         <Image src="/back-icon.svg" alt="" width={24} height={24} priority />
       </Link>
+      <div className="absolute top-[max(1rem,env(safe-area-inset-top))] right-3 z-20">
+        <LanguageSwitcher />
+      </div>
 
       <SelectedPlaceCard stop={selectedStop} isHidden={snap === "expanded"} />
 
@@ -379,7 +385,7 @@ export function MapScreen({ appKey, itinerary, initialStopId, planId, workId }: 
         {nextStop && followStatus !== "idle" && followStatus !== "location-unavailable" ? (
           <div className="mt-1 flex items-end justify-between gap-3">
             <strong className="min-w-0 truncate text-[17px] leading-6 text-white">
-              다음 · {nextStop.name}
+              {t("map.next", { name: nextStop.name })}
             </strong>
             <span data-testid="distance-to-next" className="shrink-0 text-[17px] font-bold text-[#70a7ff]">
               {distanceToNext === null ? "--" : formatDistance(distanceToNext)}
@@ -396,8 +402,8 @@ export function MapScreen({ appKey, itinerary, initialStopId, planId, workId }: 
                 voiceEnabledRef.current = enabled;
                 setVoiceEnabled(enabled);
                 if (enabled && "speechSynthesis" in window) {
-                  const utterance = new SpeechSynthesisUtterance("음성 안내가 켜졌습니다.");
-                  utterance.lang = "ko-KR";
+                  const utterance = new SpeechSynthesisUtterance(t("map.voiceEnabledSpeech"));
+                  utterance.lang = locale === "en" ? "en-US" : "ko-KR";
                   window.speechSynthesis.speak(utterance);
                 }
               }}
@@ -405,7 +411,7 @@ export function MapScreen({ appKey, itinerary, initialStopId, planId, workId }: 
                 voiceEnabled ? "border-[#70a7ff] bg-[#0b68ff]/30 text-white" : "border-white/15 text-[#b9c0ca]"
               }`}
             >
-              음성 {voiceEnabled ? "켜짐" : "꺼짐"}
+              {t("map.voice", { state: voiceEnabled ? t("map.on") : t("map.off") })}
             </button>
             <button
               type="button"
@@ -420,7 +426,7 @@ export function MapScreen({ appKey, itinerary, initialStopId, planId, workId }: 
                 vibrationEnabled ? "border-[#70a7ff] bg-[#0b68ff]/30 text-white" : "border-white/15 text-[#b9c0ca]"
               }`}
             >
-              진동 {vibrationEnabled ? "켜짐" : "꺼짐"}
+              {t("map.vibration", { state: vibrationEnabled ? t("map.on") : t("map.off") })}
             </button>
           </div>
         ) : null}
@@ -429,7 +435,7 @@ export function MapScreen({ appKey, itinerary, initialStopId, planId, workId }: 
       {["following", "paused", "rerouting"].includes(followStatus) ? (
         <button
           type="button"
-          aria-label="내 위치로 돌아가기"
+          aria-label={t("map.backToLocation")}
           onClick={() => {
             cameraFollowingRef.current = true;
             if (lastPositionRef.current) {
@@ -443,7 +449,7 @@ export function MapScreen({ appKey, itinerary, initialStopId, planId, workId }: 
           style={{ bottom: `calc(${100 - SNAP_TOP[snap]}% + 16px)` }}
         >
           <span aria-hidden="true" className="size-2.5 rounded-full border-2 border-current" />
-          내 위치
+          {t("map.myLocation")}
         </button>
       ) : null}
 
@@ -491,7 +497,7 @@ export function MapScreen({ appKey, itinerary, initialStopId, planId, workId }: 
         >
           <button
             type="button"
-            aria-label={snap === "expanded" ? "일정 패널 접기" : "일정 패널 펼치기"}
+            aria-label={snap === "expanded" ? t("map.collapsePanel") : t("map.expandPanel")}
             onClick={(event) => {
               if (event.detail === 0) {
                 setSnap((current) => current === "expanded" ? "medium" : "expanded");
@@ -544,7 +550,7 @@ export function MapScreen({ appKey, itinerary, initialStopId, planId, workId }: 
                   {stop.kind === "filming-location" ? (
                     <Link
                       href={`/camera/${encodeURIComponent(workId)}?plan=${encodeURIComponent(planId)}&stop=${encodeURIComponent(stop.id)}`}
-                      aria-label={`${stop.name} 방문 촬영`}
+                      aria-label={t("map.visitPhoto", { name: stop.name })}
                       className="absolute top-1/2 right-1.5 z-10 flex size-9 -translate-y-1/2 items-center justify-center rounded-full focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-white"
                     >
                       <Image
@@ -561,7 +567,7 @@ export function MapScreen({ appKey, itinerary, initialStopId, planId, workId }: 
                 {stop.distanceToNext ? (
                   <p
                     data-testid={`itinerary-distance-${index}`}
-                    aria-label={`${stop.name}에서 다음 방문지까지 ${stop.distanceToNext}`}
+                    aria-label={t("map.distanceNext", { name: stop.name, distance: stop.distanceToNext })}
                     className="mt-3 text-[12px] leading-[14px] font-medium text-[#888888]"
                   >
                     {stop.distanceToNext}
@@ -586,12 +592,12 @@ export function MapScreen({ appKey, itinerary, initialStopId, planId, workId }: 
             className="h-[51px] w-full rounded-xl bg-[#0b68ff] text-[16px] leading-[19px] font-semibold text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white disabled:opacity-70"
           >
             {followStatus === "locating"
-              ? "현재 위치 확인 중..."
+              ? t("map.locatingButton")
               : ["following", "paused", "rerouting"].includes(followStatus)
-                ? "따라가기 종료"
+                ? t("map.stopFollowing")
                 : followStatus === "completed"
-                  ? "일정 다시 따라가기"
-                  : "루트 따라가기"}
+                  ? t("map.followAgain")
+                  : t("map.follow")}
           </button>
         </div>
       </section>

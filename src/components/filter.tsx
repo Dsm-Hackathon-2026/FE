@@ -1,8 +1,10 @@
 "use client";
 
-const FILTERS = ["드라마", "영화", "애니메이션"] as const;
+import type { ContentType } from "@/api/contents/type";
+import { useI18n } from "@/i18n/provider";
 
-export type FilterValue = (typeof FILTERS)[number];
+const FILTERS: readonly ContentType[] = ["DRAMA", "MOVIE", "ANIMATION"];
+export type FilterValue = ContentType;
 
 type FilterProps = {
   value: FilterValue;
@@ -10,9 +12,13 @@ type FilterProps = {
 };
 
 export function Filter({ value, onChange }: FilterProps) {
+  const { t } = useI18n();
+  const labels: Record<ContentType, string> = {
+    DRAMA: t("filter.drama"), MOVIE: t("filter.movie"), ANIMATION: t("filter.animation"),
+  };
 
   return (
-    <div role="group" aria-label="작품 유형 필터" className="flex h-12 items-stretch gap-4">
+    <div role="group" aria-label={t("filter.label")} className="flex h-12 items-stretch gap-4">
       {FILTERS.map((filter) => {
         const isActive = value === filter;
 
@@ -26,7 +32,7 @@ export function Filter({ value, onChange }: FilterProps) {
               isActive ? "font-semibold text-white" : "font-normal text-[#aeaeae]"
             }`}
           >
-            <span data-filter-label>{filter}</span>
+            <span data-filter-label>{labels[filter]}</span>
             <span
               data-testid={isActive ? "filter-indicator" : undefined}
               aria-hidden="true"

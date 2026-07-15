@@ -20,6 +20,7 @@ import {
   findRouteDepartureFromCurrentLocation,
   getAddressCandidates,
 } from "@/features/map/kakao-map";
+import { useI18n } from "@/i18n/provider";
 
 type RegionalCourseListProps = {
   appKey?: string;
@@ -39,6 +40,7 @@ function currentTime() {
 }
 
 export function RegionalCourseList({ appKey, courses, workId }: RegionalCourseListProps) {
+  const { t } = useI18n();
   const router = useRouter();
   const recommendation = useRecommendPilgrimageRoute();
   const [pendingCourseId, setPendingCourseId] = useState<string | null>(null);
@@ -81,7 +83,7 @@ export function RegionalCourseList({ appKey, courses, workId }: RegionalCourseLi
 
   const createCourse = async (course: RegionalCourse) => {
     if (!appKey) {
-      setErrorMessage("지도 설정을 확인한 뒤 다시 시도해 주세요.");
+      setErrorMessage(t("route.mapConfigError"));
       return;
     }
 
@@ -98,7 +100,7 @@ export function RegionalCourseList({ appKey, courses, workId }: RegionalCourseLi
         longitude: representativeSpot.longitude,
       });
       if (!departure) {
-        setErrorMessage("현재 위치에서 이용할 출발지를 찾지 못했습니다.");
+        setErrorMessage(t("route.noDeparture"));
         return;
       }
 
@@ -135,7 +137,7 @@ export function RegionalCourseList({ appKey, courses, workId }: RegionalCourseLi
           name: spot.name,
           address: spot.address,
           imageSrc: spot.imageUrl,
-          imageAlt: `${spot.name} 전경`,
+          imageAlt: t("detail.imageAlt", { name: spot.name }),
           coordinates: { latitude: spot.latitude, longitude: spot.longitude },
         })),
         recommendation: route,
@@ -148,8 +150,8 @@ export function RegionalCourseList({ appKey, courses, workId }: RegionalCourseLi
       router.push(`/map/${encodeURIComponent(workId)}?plan=${encodeURIComponent(course.id)}`);
     } catch (error) {
       setErrorMessage(isUnrecognizedAddressError(error)
-        ? "일부 촬영지 주소를 확인하지 못했습니다. 잠시 후 다시 시도해 주세요."
-        : "지역 명장면 코스를 만들지 못했습니다. 잠시 후 다시 시도해 주세요.");
+        ? t("course.addressError")
+        : t("course.createError"));
     } finally {
       setPendingCourseId(null);
     }
@@ -161,7 +163,7 @@ export function RegionalCourseList({ appKey, courses, workId }: RegionalCourseLi
         id="regional-courses-title"
         className="text-[22px] leading-8 font-bold tracking-[-0.025em] text-white"
       >
-        지역별 명장면 코스
+        {t("course.title")}
       </h2>
       <ol className="mt-6 flex flex-col gap-8" data-testid="regional-course-list">
         {courses.map((course) => {
@@ -172,7 +174,7 @@ export function RegionalCourseList({ appKey, courses, workId }: RegionalCourseLi
               <button
                 type="button"
                 aria-busy={isPending}
-                aria-label={`${course.region} 명장면 코스 ${isGenerated ? "보기" : "만들기"}, 촬영지 ${course.spots.length}곳과 맛집 및 카페 포함`}
+                aria-label={t("course.accessible", { region: course.region, action: isGenerated ? t("course.view") : t("course.create"), count: course.spots.length })}
                 disabled={pendingCourseId !== null}
                 onClick={() => createCourse(course)}
                 className="grid w-full grid-cols-[124px_minmax(0,1fr)] items-center gap-3.5 text-left focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white disabled:opacity-60 sm:grid-cols-[144px_minmax(0,1fr)] sm:gap-5"
@@ -180,13 +182,13 @@ export function RegionalCourseList({ appKey, courses, workId }: RegionalCourseLi
                 <CourseMosaic course={course} />
                 <span className="min-w-0">
                   <span className="block truncate text-lg leading-6 font-semibold tracking-[-0.02em] text-white">
-                    {course.region} 명장면 코스
+                    {t("course.name", { region: course.region })}
                   </span>
                   <span className="mt-1.5 block text-[13px] leading-5 text-[#a6a6a6]">
-                    촬영지 {course.spots.length}곳 · 맛집 · 카페
+                    {t("course.summary", { count: course.spots.length })}
                   </span>
                   <span className="mt-2 block text-sm leading-5 font-semibold text-white">
-                    {isPending ? `${course.region} 코스를 만들고 있어요` : isGenerated ? "코스 보기" : "코스 만들기"}
+                    {isPending ? t("course.creating", { region: course.region }) : isGenerated ? t("course.viewButton") : t("course.createButton")}
                     {!isPending ? <span aria-hidden="true"> →</span> : null}
                   </span>
                 </span>
@@ -198,7 +200,7 @@ export function RegionalCourseList({ appKey, courses, workId }: RegionalCourseLi
       {errorMessage ? <p role="alert" className="mt-5 text-sm text-[#ff8f8f]">{errorMessage}</p> : null}
       {pendingCourse ? (
         <RouteGenerationOverlay
-          destinationName={`${pendingCourse.region} 명장면 코스`}
+          destinationName={t("course.name", { region: pendingCourse.region })}
           progress={generationProgress}
           stage={generationStage}
         />

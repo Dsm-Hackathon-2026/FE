@@ -1,12 +1,14 @@
 "use client";
 
 import { useLayoutEffect, useRef, useState } from "react";
+import { useI18n } from "@/i18n/provider";
 
 type WorkDescriptionProps = {
   description: string;
 };
 
 export function WorkDescription({ description }: WorkDescriptionProps) {
+  const { t } = useI18n();
   const [isExpanded, setIsExpanded] = useState(false);
   const [isOverflowing, setIsOverflowing] = useState(false);
   const descriptionRef = useRef<HTMLParagraphElement>(null);
@@ -56,7 +58,7 @@ export function WorkDescription({ description }: WorkDescriptionProps) {
           onClick={() => setIsExpanded((currentValue) => !currentValue)}
           className="mt-2 flex min-h-11 items-center text-[15px] leading-6 text-[#e5e5e5] underline decoration-[#e5e5e5] underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
         >
-          {isExpanded ? "접기" : "더보기"}
+          {isExpanded ? t("detail.less") : t("detail.more")}
         </button>
       ) : null}
     </div>

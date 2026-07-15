@@ -2,8 +2,10 @@
 
 import Image from "next/image";
 import { type AnimationEvent, useState } from "react";
+import { useI18n } from "@/i18n/provider";
 
 export function LandingIntro() {
+  const { t } = useI18n();
   const [isVisible, setIsVisible] = useState(true);
 
   if (!isVisible) {
@@ -19,7 +21,7 @@ export function LandingIntro() {
   return (
     <div
       role="status"
-      aria-label="성덕순례 시작 화면"
+      aria-label={t("landing.start")}
       data-testid="landing-intro"
       className="fixed inset-0 z-50 animate-landing-intro-exit overflow-hidden bg-black px-6 will-change-[opacity,transform] motion-reduce:hidden"
       onAnimationEnd={handleAnimationEnd}
@@ -34,7 +36,7 @@ export function LandingIntro() {
         >
           <Image
             src="/landing-icon.svg"
-            alt="성덕순례"
+            alt={t("header.brand")}
             width={200}
             height={200}
             priority
@@ -43,7 +45,7 @@ export function LandingIntro() {
       </div>
 
       <section
-        aria-label="성덕순례 소개"
+        aria-label={t("landing.intro")}
         className="absolute bottom-[max(3rem,env(safe-area-inset-bottom))] left-1/2 w-[268px] -translate-x-1/2"
       >
         <div
@@ -51,15 +53,13 @@ export function LandingIntro() {
           className="flex animate-landing-feature-in flex-col items-center gap-3 will-change-[opacity,transform] motion-reduce:animate-none"
         >
           <p className="text-center text-xl leading-[1.4] font-light tracking-[-0.02em] text-white">
-            나의 최애 드라마를
-            <br />
-            직접 만나는 순간.
+            {t("landing.tagline").split("\n").map((line, index) => <span key={line}>{index > 0 ? <br /> : null}{line}</span>)}
           </p>
 
           <div className="relative h-[84px] w-[268px] overflow-hidden rounded-[10px]">
             <Image
               src="/monthly-destination.png"
-              alt="이달의 여행지, 강릉 연진 해변"
+              alt={t("landing.destinationAlt")}
               fill
               sizes="268px"
               className="object-cover"

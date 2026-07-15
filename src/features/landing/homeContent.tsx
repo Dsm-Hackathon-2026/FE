@@ -7,20 +7,16 @@ import {
   usePopularContents,
   useRecommendedContents,
 } from "@/api/contents";
-import type { ContentType } from "@/api/contents/type";
 import { DramaPosterCarousel } from "@/components/dramaPosterCarousel";
 import { Famous } from "@/components/famous";
 import { Filter, type FilterValue } from "@/components/filter";
-
-const CONTENT_TYPE_BY_FILTER: Record<FilterValue, ContentType> = {
-  드라마: "DRAMA",
-  영화: "MOVIE",
-  애니메이션: "ANIMATION",
-};
+import { useI18n } from "@/i18n/provider";
 
 export function HomeContent() {
-  const [filter, setFilter] = useState<FilterValue>("드라마");
-  const contentType = CONTENT_TYPE_BY_FILTER[filter];
+  const { t } = useI18n();
+  const [filter, setFilter] = useState<FilterValue>("DRAMA");
+  const contentType = filter;
+  const typeLabel = { DRAMA: t("filter.drama"), MOVIE: t("filter.movie"), ANIMATION: t("filter.animation") }[filter];
   const popular = usePopularContents({ contentType, limit: 10 });
   const recommended = useRecommendedContents({ contentType, limit: 8 });
   const mostVisited = useMostVisitedContents({ contentType, limit: 8 });
@@ -32,7 +28,7 @@ export function HomeContent() {
       </div>
       <div className="mt-7">
         <Famous
-          title={filter}
+          title={typeLabel}
           contents={popular.data}
           isLoading={popular.isPending}
           isError={popular.isError}
@@ -41,14 +37,14 @@ export function HomeContent() {
       <div className="mt-7 flex flex-col gap-7 pb-8">
         <DramaPosterCarousel
           id="recommended-dramas"
-          title={`추천 ${filter}`}
+          title={t("home.recommended", { type: typeLabel })}
           contents={recommended.data?.content}
           isLoading={recommended.isPending}
           isError={recommended.isError}
         />
         <DramaPosterCarousel
           id="popular-scene-dramas"
-          title={`지금 가장 많이 가는 명장면 ${filter}`}
+          title={t("home.mostVisited", { type: typeLabel })}
           contents={mostVisited.data?.content}
           isLoading={mostVisited.isPending}
           isError={mostVisited.isError}

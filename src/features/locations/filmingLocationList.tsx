@@ -16,6 +16,7 @@ import {
   getAddressCandidates,
 } from "@/features/map/kakao-map";
 import { hasVisitRecordForStop } from "@/features/visits/visit-record";
+import { useI18n } from "@/i18n/provider";
 
 type FilmingLocation = {
   id: string;
@@ -36,12 +37,6 @@ type FilmingLocationListProps = {
 
 export type GenerationStage = "locating" | "recommending" | "mapping";
 
-const GENERATION_MESSAGE: Record<GenerationStage, string> = {
-  locating: "현재 위치에서 목적지까지 빠른 출발지를 찾고 있어요",
-  recommending: "취향에 맞는 이동 순서와 들를 곳을 고르고 있어요",
-  mapping: "추천 장소를 지도 위에 차례대로 배치하고 있어요",
-};
-
 const GENERATION_TARGET: Record<GenerationStage, number> = {
   locating: 28,
   recommending: 72,
@@ -59,6 +54,7 @@ export function FilmingLocationList({
   locations,
   appKey,
 }: FilmingLocationListProps) {
+  const { t } = useI18n();
   const router = useRouter();
   const recommendation = useRecommendRoute();
   const [pendingLocationId, setPendingLocationId] = useState<string | null>(null);
@@ -116,7 +112,7 @@ export function FilmingLocationList({
 
   const createRoute = async (location: FilmingLocation) => {
     if (!appKey) {
-      setErrorMessage("지도 설정을 확인한 뒤 다시 시도해 주세요.");
+      setErrorMessage(t("route.mapConfigError"));
       return;
     }
 
@@ -135,7 +131,7 @@ export function FilmingLocationList({
         destinationCoordinates,
       );
       if (!departure) {
-        setErrorMessage("현재 위치에서 이용할 출발지를 찾지 못했습니다.");
+        setErrorMessage(t("route.noDeparture"));
         return;
       }
 
@@ -196,8 +192,8 @@ export function FilmingLocationList({
     } catch (error) {
       setErrorMessage(
         isUnrecognizedAddressError(error)
-          ? "출발지 또는 목적지 주소를 확인하지 못했습니다. 다른 장소를 선택해 주세요."
-          : "추천 일정을 만들지 못했습니다. 잠시 후 다시 시도해 주세요.",
+          ? t("route.addressError")
+          : t("route.createError"),
       );
     } finally {
       setPendingLocationId(null);
@@ -210,23 +206,23 @@ export function FilmingLocationList({
         id="filming-locations-title"
         className="text-[22px] leading-8 font-bold tracking-[-0.025em] text-white"
       >
-        {workTitle}의 명장면 장소
+        {t("detail.scenePlaces", { title: workTitle })}
       </h2>
 
       <ol className="mt-6 flex flex-col gap-8" data-testid="filming-location-list">
         {locations.map((location) => {
           const isGenerated = generatedLocationIds.has(location.id);
           const isVisited = visitedLocationIds.has(location.id);
-          const status = isVisited ? "방문완료" : isGenerated ? "루트 생성" : null;
+          const status = isVisited ? t("route.visited") : isGenerated ? t("route.generated") : null;
           return (
             <li key={location.id}>
               <button
                 type="button"
                 aria-label={isVisited
-                  ? `${location.name} 방문 완료, 저장된 추천 일정 보기`
+                  ? t("route.viewVisited", { name: location.name })
                   : isGenerated
-                    ? `${location.name} 저장된 추천 일정 보기`
-                    : `${location.name} 추천 일정 만들기`}
+                    ? t("route.viewSaved", { name: location.name })
+                    : t("route.create", { name: location.name })}
                 disabled={pendingLocationId !== null}
                 onClick={() => createRoute(location)}
                 className="grid w-full grid-cols-[124px_minmax(0,1fr)] items-center gap-3.5 rounded-sm text-left focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white disabled:opacity-60 sm:grid-cols-[144px_minmax(0,1fr)] sm:gap-5"
@@ -289,6 +285,12 @@ export function RouteGenerationOverlay({
   progress: number;
   stage: GenerationStage;
 }) {
+  const { t } = useI18n();
+  const generationMessage = {
+    locating: t("route.stage.locating"),
+    recommending: t("route.stage.recommending"),
+    mapping: t("route.stage.mapping"),
+  }[stage];
   return (
     <div
       role="dialog"
@@ -329,7 +331,7 @@ export function RouteGenerationOverlay({
 
         <div
           role="progressbar"
-          aria-label="AI 추천 일정 생성률"
+          aria-label={t("route.progressLabel")}
           aria-valuemin={0}
           aria-valuemax={100}
           aria-valuenow={progress}
@@ -343,9 +345,7 @@ export function RouteGenerationOverlay({
           id="route-generation-title"
           className="mt-5 text-[22px] leading-8 font-semibold tracking-[-0.025em] text-white"
         >
-          {destinationName}로 가는
-          <br />
-          성덕순례길을 만들고 있어요
+          {t("route.creatingTitle", { destination: destinationName }).split("\n").map((line, index) => <span key={line}>{index > 0 ? <br /> : null}{line}</span>)}
         </h2>
         <p
           id="route-generation-status"
@@ -353,7 +353,7 @@ export function RouteGenerationOverlay({
           aria-live="polite"
           className="mt-3 min-h-10 text-sm leading-5 text-[#a9a9a9]"
         >
-          {GENERATION_MESSAGE[stage]}
+          {generationMessage}
         </p>
       </div>
     </div>
