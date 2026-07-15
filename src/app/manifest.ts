@@ -15,7 +15,7 @@ export default function manifest(): MetadataRoute.Manifest {
     lang: "ko",
     icons: [
       {
-        src: "/icon.svg",
+        src: "/landing-icon.svg",
         sizes: "any",
         type: "image/svg+xml",
         purpose: "any",
