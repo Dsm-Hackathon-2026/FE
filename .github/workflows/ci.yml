@@ -37,6 +37,9 @@ jobs:
 
       - name: Verify repository
         run: pnpm verify
+        env:
+          API_BASE_URL: http://127.0.0.1:8080
+          NEXT_PUBLIC_KAKAO_MAP_APP_KEY: playwright-test-key
 
   deploy-production:
     name: Deploy production
