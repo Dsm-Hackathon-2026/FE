@@ -42,7 +42,7 @@ export function CameraData({ contentId, planId, stopId }: CameraDataProps) {
     );
   }
 
-  const spotId = Number(planId);
+  const spotId = stop.spotId ?? Number(stop.id.replace(/^destination-/, ""));
   if (!Number.isSafeInteger(spotId) || spotId <= 0) {
     return (
       <CameraState role="alert">

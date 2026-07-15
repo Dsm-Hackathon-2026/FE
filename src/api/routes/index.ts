@@ -14,6 +14,8 @@ import type {
   AiRecommendationAddressCandidatesRequest,
   AiRecommendationRequest,
   AiRecommendationResponse,
+  PilgrimageRecommendationResponse,
+  PilgrimageRouteRequest,
   TimelineItemResponse,
 } from "./type";
 
@@ -30,6 +32,13 @@ function readAliasedString(
 function readNullableString(record: Record<string, unknown>, key: string) {
   const value = record[key];
   if (value === null) return null;
+  if (typeof value !== "string") throw invalidResponse(key);
+  return value;
+}
+
+function readOptionalNullableString(record: Record<string, unknown>, key: string) {
+  const value = record[key];
+  if (value === undefined || value === null) return null;
   if (typeof value !== "string") throw invalidResponse(key);
   return value;
 }
@@ -110,4 +119,36 @@ export async function recommendRouteWithAddressFallback({
 
 export function useRecommendRoute() {
   return useMutation({ mutationFn: recommendRouteWithAddressFallback });
+}
+
+export async function recommendPilgrimageRoute(
+  request: PilgrimageRouteRequest,
+): Promise<PilgrimageRecommendationResponse> {
+  const value = await apiRequest("/routes/pilgrimage", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(request),
+  });
+  if (!isRecord(value) || !isRecord(value.meta)) throw invalidResponse();
+
+  return {
+    status: readNumber(value, "status"),
+    meta: {
+      startPlace: readAliasedString(value.meta, "startPlace", "start_place"),
+      startAddress: readOptionalNullableString(
+        value.meta,
+        value.meta.startAddress !== undefined ? "startAddress" : "start_address",
+      ),
+      destinations: readArray(value.meta, "destinations").map((destination) => {
+        if (typeof destination !== "string") throw invalidResponse("destinations");
+        return destination;
+      }),
+    },
+    courseConcept: readAliasedString(value, "courseConcept", "course_concept"),
+    timeline: readArray(value, "timeline").map(parseTimelineItem),
+  };
+}
+
+export function useRecommendPilgrimageRoute() {
+  return useMutation({ mutationFn: recommendPilgrimageRoute });
 }

@@ -15,7 +15,7 @@ import {
   findRouteDepartureFromCurrentLocation,
   getAddressCandidates,
 } from "@/features/map/kakao-map";
-import { hasVisitRecord } from "@/features/visits/visit-record";
+import { hasVisitRecordForStop } from "@/features/visits/visit-record";
 
 type FilmingLocation = {
   id: string;
@@ -34,7 +34,7 @@ type FilmingLocationListProps = {
   appKey?: string;
 };
 
-type GenerationStage = "locating" | "recommending" | "mapping";
+export type GenerationStage = "locating" | "recommending" | "mapping";
 
 const GENERATION_MESSAGE: Record<GenerationStage, string> = {
   locating: "현재 위치에서 목적지까지 빠른 출발지를 찾고 있어요",
@@ -83,9 +83,8 @@ export function FilmingLocationList({
       ));
       setVisitedLocationIds(new Set(
         locations
-          .filter((location) => hasVisitRecord(
+          .filter((location) => hasVisitRecordForStop(
             workId,
-            location.id,
             `destination-${location.id}`,
           ))
           .map((location) => location.id),
@@ -177,6 +176,7 @@ export function FilmingLocationList({
         departure: resolvedDeparture,
         destination: {
           id: location.id,
+          spotId: Number(location.id),
           name: location.name,
           address: location.address,
           imageSrc: location.imageSrc,
@@ -280,7 +280,7 @@ export function FilmingLocationList({
   );
 }
 
-function RouteGenerationOverlay({
+export function RouteGenerationOverlay({
   destinationName,
   progress,
   stage,

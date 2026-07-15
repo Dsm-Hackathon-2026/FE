@@ -15,6 +15,18 @@ export interface AiRecommendationMetaResponse {
   destination: string;
 }
 
+export interface PilgrimageRouteRequest {
+  startAddress: string;
+  startTime: string;
+  spotIds: readonly number[];
+}
+
+export interface PilgrimageRecommendationMetaResponse {
+  startPlace: string;
+  startAddress: string | null;
+  destinations: string[];
+}
+
 export interface TimelineItemResponse {
   time: string;
   place: string;
@@ -27,6 +39,13 @@ export interface TimelineItemResponse {
 export interface AiRecommendationResponse {
   status: number;
   meta: AiRecommendationMetaResponse;
+  courseConcept: string;
+  timeline: TimelineItemResponse[];
+}
+
+export interface PilgrimageRecommendationResponse {
+  status: number;
+  meta: PilgrimageRecommendationMetaResponse;
   courseConcept: string;
   timeline: TimelineItemResponse[];
 }

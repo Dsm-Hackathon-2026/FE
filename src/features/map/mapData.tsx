@@ -49,7 +49,7 @@ export function MapData({ appKey, contentId, planId }: MapDataProps) {
     <MapScreen
       appKey={appKey}
       itinerary={itinerary}
-      initialStopId={`destination-${planId}`}
+      initialStopId={itinerary.stops.findLast((stop) => stop.kind === "filming-location")?.id}
       planId={planId}
       workId={String(contentId)}
     />

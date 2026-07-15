@@ -14,6 +14,7 @@ export type ItineraryStop = {
   address: string;
   imageSrc?: string;
   imageAlt?: string;
+  spotId?: number;
   kind: ItineraryStopKind;
   coordinates: {
     latitude: number;

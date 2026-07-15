@@ -1,4 +1,8 @@
-import type { AiRecommendationResponse, TimelineItemResponse } from "@/api/routes/type";
+import type {
+  AiRecommendationResponse,
+  PilgrimageRecommendationResponse,
+  TimelineItemResponse,
+} from "@/api/routes/type";
 import type {
   Itinerary,
   ItineraryStop,
@@ -28,6 +32,7 @@ const STOP_KINDS = new Set<ItineraryStopKind>([
 
 export type RouteDestination = {
   id: string;
+  spotId: number;
   name: string;
   address: string;
   imageSrc: string;
@@ -111,6 +116,7 @@ function isItineraryStop(value: unknown): value is ItineraryStop {
     && isCoordinates(stop.coordinates)
     && (stop.imageSrc === undefined || typeof stop.imageSrc === "string")
     && (stop.imageAlt === undefined || typeof stop.imageAlt === "string")
+    && (stop.spotId === undefined || Number.isSafeInteger(stop.spotId))
     && (stop.distanceToNext === undefined || typeof stop.distanceToNext === "string")
   );
 }
@@ -218,12 +224,140 @@ export async function createRecommendedItinerary({
     address: destination.address,
     imageSrc: destination.imageSrc,
     imageAlt: destination.imageAlt,
+    spotId: destination.spotId,
     kind: "filming-location",
     coordinates: destination.coordinates,
   });
 
   return {
     id: `recommended-${contentId}-${destination.id}`,
+    title: recommendation.courseConcept,
+    stops: withStopDistances(stops),
+  };
+}
+
+function matchingDestination(
+  item: TimelineItemResponse & { address: string },
+  destinations: readonly RouteDestination[],
+  usedDestinationIds: ReadonlySet<string>,
+) {
+  let closest: { destination: RouteDestination; distance: number } | null = null;
+  const coordinates = timelineCoordinates(item);
+
+  for (const destination of destinations) {
+    if (usedDestinationIds.has(destination.id)) continue;
+    if (normalizeAddress(item.address) === normalizeAddress(destination.address)) {
+      return destination;
+    }
+  }
+
+  if (!/(목적지|명장면|촬영지)/.test(`${item.place} ${item.activity}`)) return null;
+  for (const destination of destinations) {
+    if (usedDestinationIds.has(destination.id)) continue;
+    if (!coordinates) continue;
+    const distance = distanceBetweenMeters(coordinates, destination.coordinates);
+    if (distance <= 100 && (!closest || distance < closest.distance)) {
+      closest = { destination, distance };
+    }
+  }
+
+  return closest?.destination ?? null;
+}
+
+export async function createPilgrimageItinerary({
+  appKey,
+  contentId,
+  courseId,
+  departure,
+  destinations,
+  recommendation,
+}: {
+  appKey: string;
+  contentId: number;
+  courseId: string;
+  departure: RouteDeparture;
+  destinations: readonly RouteDestination[];
+  recommendation: PilgrimageRecommendationResponse;
+}): Promise<Itinerary> {
+  const stops: ItineraryStop[] = [{
+    id: "departure",
+    order: 0,
+    name: departure.kind === "current-location"
+      ? departure.name
+      : recommendation.meta.startPlace || departure.name,
+    description: "여행 시작",
+    address: departure.address,
+    kind: departure.kind === "current-location" ? "current-location" : "station",
+    coordinates: departure.coordinates,
+  }];
+  const usedDestinationIds = new Set<string>();
+  const seenNearbyAddresses = new Set<string>();
+
+  for (const [index, item] of recommendation.timeline.entries()) {
+    if (!item.address) continue;
+    if (
+      index === 0
+      && item.place === recommendation.meta.startPlace
+      && isEndpointItem(item as TimelineItemResponse & { address: string }, departure)
+    ) continue;
+
+    const destination = matchingDestination(
+      item as TimelineItemResponse & { address: string },
+      destinations,
+      usedDestinationIds,
+    );
+    if (destination) {
+      usedDestinationIds.add(destination.id);
+      seenNearbyAddresses.add(normalizeAddress(destination.address));
+      stops.push({
+        id: `destination-${destination.id}`,
+        order: stops.length,
+        name: destination.name,
+        description: item.activity || "명장면 장소 방문",
+        address: destination.address,
+        imageSrc: destination.imageSrc,
+        imageAlt: destination.imageAlt,
+        spotId: destination.spotId,
+        kind: "filming-location",
+        coordinates: destination.coordinates,
+      });
+      continue;
+    }
+
+    const normalizedAddress = normalizeAddress(item.address);
+    if (seenNearbyAddresses.has(normalizedAddress)) continue;
+    seenNearbyAddresses.add(normalizedAddress);
+    const coordinates = timelineCoordinates(item) ?? await geocodeAddress(appKey, item.address);
+    if (!coordinates) continue;
+    stops.push({
+      id: `recommendation-${stops.length}`,
+      order: stops.length,
+      name: item.place,
+      description: item.activity,
+      address: item.address,
+      kind: inferStopKind(item),
+      coordinates,
+    });
+  }
+
+  for (const destination of destinations) {
+    if (usedDestinationIds.has(destination.id)) continue;
+    stops.push({
+      id: `destination-${destination.id}`,
+      order: stops.length,
+      name: destination.name,
+      description: "명장면 장소 방문",
+      address: destination.address,
+      imageSrc: destination.imageSrc,
+      imageAlt: destination.imageAlt,
+      spotId: destination.spotId,
+      kind: "filming-location",
+      coordinates: destination.coordinates,
+    });
+  }
+
+  return {
+    id: `pilgrimage-${contentId}-${courseId}`,
     title: recommendation.courseConcept,
     stops: withStopDistances(stops),
   };

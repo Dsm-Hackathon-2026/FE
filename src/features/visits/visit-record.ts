@@ -55,3 +55,22 @@ export function readVisitRecord(workId: string, planId: string, stopId: string) 
 export function hasVisitRecord(workId: string, planId: string, stopId: string) {
   return readVisitRecord(workId, planId, stopId) !== null;
 }
+
+export function hasVisitRecordForStop(workId: string, stopId: string) {
+  const keyPrefix = `${VISIT_RECORD_PREFIX}:${workId}:`;
+  for (let index = 0; index < sessionStorage.length; index += 1) {
+    const key = sessionStorage.key(index);
+    if (!key?.startsWith(keyPrefix)) continue;
+    const serialized = sessionStorage.getItem(key);
+    if (!serialized) continue;
+    try {
+      const record: unknown = JSON.parse(serialized);
+      if (isVisitRecord(record) && record.workId === workId && record.stopId === stopId) {
+        return true;
+      }
+    } catch {
+      // 손상된 보조 기록은 건너뛰고 다른 일정의 방문 기록을 계속 확인한다.
+    }
+  }
+  return false;
+}

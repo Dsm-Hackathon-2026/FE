@@ -168,6 +168,50 @@ test("촬영지에서 멀면 인증 실패를 안내하고 다시 촬영할 수 
   await expect(page.getByTestId("verification-result-screen")).toHaveCount(0);
 });
 
+test("지역 코스에서는 선택한 촬영지 ID로 방문을 인증한다", async ({ page }) => {
+  await installCameraMock(page);
+  await page.addInitScript(() => {
+    sessionStorage.setItem("seongdeok:route-plan:1:region-gangwon", JSON.stringify({
+      version: 2,
+      contentId: 1,
+      destinationId: "region-gangwon",
+      itinerary: {
+        id: "pilgrimage-1-region-gangwon",
+        title: "강원 명장면 코스",
+        stops: [{
+          id: "destination-2",
+          order: 0,
+          name: "강릉 활어 횟집",
+          description: "두 번째 명장면 장소 방문",
+          address: "강원특별자치도 강릉시 창해로 451",
+          imageSrc: "/gangneung-yeongjin-beach.png",
+          imageAlt: "강릉 활어 횟집 전경",
+          spotId: 2,
+          kind: "filming-location",
+          coordinates: { latitude: 37.7953, longitude: 128.9182 },
+        }],
+      },
+    }));
+  });
+
+  await page.goto("/camera/1?plan=region-gangwon&stop=destination-2");
+  await page.getByRole("button", { name: "사진 촬영" }).click();
+  const verificationRequest = page.waitForRequest((request) => (
+    new URL(request.url()).pathname === "/backend-api/verifications"
+    && request.method() === "POST"
+  ));
+  await page.getByRole("button", { name: "인증하기" }).click();
+
+  const requestUrl = new URL((await verificationRequest).url());
+  expect(requestUrl.searchParams.get("spotId")).toBe("2");
+  await expect(page.getByTestId("verification-result-screen")).toBeVisible();
+  await expect(page.getByRole("link", { name: "지도 일정으로 돌아가기" }))
+    .toHaveAttribute("href", "/map/1?plan=region-gangwon");
+
+  await page.goto("/detail/1");
+  await expect(page.getByTestId("visit-completed-2")).toHaveText("방문완료");
+});
+
 test("위치 권한이 없으면 인증을 중단하고 권한 안내를 표시한다", async ({ page }) => {
   await installCameraMock(page);
   await page.addInitScript(() => {
