@@ -22,4 +22,5 @@ export interface SpotDetailResponse {
   longitude: number;
   address: string;
   imageUrl: string;
+  verificationImageUrl: string | null;
 }

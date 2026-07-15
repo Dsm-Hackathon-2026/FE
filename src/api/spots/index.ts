@@ -6,6 +6,7 @@ import {
   isRecord,
   readArray,
   readBoolean,
+  readNullableString,
   readNumber,
   readString,
 } from "@/api/client";
@@ -56,6 +57,7 @@ export async function getSpotDetail(
     longitude: readNumber(value, "longitude"),
     address: readString(value, "address"),
     imageUrl: readString(value, "imageUrl"),
+    verificationImageUrl: readNullableString(value, "verificationImageUrl"),
   };
 }
 

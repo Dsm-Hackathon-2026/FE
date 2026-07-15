@@ -62,6 +62,12 @@ export function readString(record: Record<string, unknown>, key: string) {
   return value;
 }
 
+export function readNullableString(record: Record<string, unknown>, key: string) {
+  const value = record[key];
+  if (value !== null && typeof value !== "string") throw invalidResponse(key);
+  return value;
+}
+
 export function readNumber(record: Record<string, unknown>, key: string) {
   const value = record[key];
   if (typeof value !== "number" || !Number.isFinite(value)) throw invalidResponse(key);

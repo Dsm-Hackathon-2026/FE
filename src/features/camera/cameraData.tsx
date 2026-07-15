@@ -42,9 +42,25 @@ export function CameraData({ contentId, planId, stopId }: CameraDataProps) {
     );
   }
 
+  const spotId = Number(planId);
+  if (!Number.isSafeInteger(spotId) || spotId <= 0) {
+    return (
+      <CameraState role="alert">
+        방문 인증할 촬영지 정보를 확인하지 못했습니다.
+        <Link
+          href={`/detail/${contentId}`}
+          className="mt-4 min-h-11 text-sm underline underline-offset-4"
+        >
+          작품 상세로 돌아가기
+        </Link>
+      </CameraState>
+    );
+  }
+
   return (
     <CameraScreen
       planId={planId}
+      spotId={spotId}
       stop={stop}
       workId={String(contentId)}
     />

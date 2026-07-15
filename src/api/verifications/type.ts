@@ -2,8 +2,8 @@ export type VerificationStatus = "SUCCESS" | "FAIL";
 
 export interface VerifyVisitRequest {
   spotId: number;
-  userLatitude: number;
-  userLongitude: number;
+  latitude: number;
+  longitude: number;
   image: File;
 }
 

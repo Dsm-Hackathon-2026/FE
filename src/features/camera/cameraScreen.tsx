@@ -2,13 +2,20 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 
+import { spotKeys } from "@/api/spots";
+import { useVerifyVisit } from "@/api/verifications";
+import type { VerificationResultResponse } from "@/api/verifications/type";
+import { VerificationResultScreen } from "@/features/camera/verificationResultScreen";
 import type { ItineraryStop } from "@/features/itineraries/itinerary";
+import { getCurrentCoordinates } from "@/features/map/kakao-map";
 import { saveVisitRecord } from "@/features/visits/visit-record";
 
 type CameraScreenProps = {
   planId: string;
+  spotId: number;
   stop: ItineraryStop;
   workId: string;
 };
@@ -17,7 +24,7 @@ type CameraStatus =
   | "requesting"
   | "ready"
   | "captured"
-  | "saved"
+  | "verifying"
   | "unsupported"
   | "denied"
   | "error";
@@ -26,12 +33,15 @@ type FacingMode = "environment" | "user";
 
 const CAMERA_STATUS_MESSAGE: Partial<Record<CameraStatus, string>> = {
   requesting: "카메라를 준비하고 있어요",
+  verifying: "현재 위치와 사진을 인증하고 있어요",
   unsupported: "이 브라우저에서는 카메라를 사용할 수 없습니다.",
   denied: "촬영하려면 브라우저의 카메라 권한을 허용해 주세요.",
   error: "카메라를 시작하지 못했습니다. 잠시 후 다시 시도해 주세요.",
 };
 
-export function CameraScreen({ planId, stop, workId }: CameraScreenProps) {
+export function CameraScreen({ planId, spotId, stop, workId }: CameraScreenProps) {
+  const queryClient = useQueryClient();
+  const verification = useVerifyVisit();
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const [status, setStatus] = useState<CameraStatus>("requesting");
@@ -39,6 +49,8 @@ export function CameraScreen({ planId, stop, workId }: CameraScreenProps) {
   const [restartSequence, setRestartSequence] = useState(0);
   const [photoDataUrl, setPhotoDataUrl] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [verificationResult, setVerificationResult] =
+    useState<VerificationResultResponse | null>(null);
   const mapHref = `/map/${encodeURIComponent(workId)}?plan=${encodeURIComponent(planId)}`;
 
   const stopCamera = () => {
@@ -129,24 +141,58 @@ export function CameraScreen({ planId, stop, workId }: CameraScreenProps) {
     setRestartSequence((sequence) => sequence + 1);
   };
 
-  const recordVisit = () => {
+  const verifyPhoto = async () => {
     if (!photoDataUrl) return;
 
     try {
-      saveVisitRecord({
-        workId,
-        planId,
-        stopId: stop.id,
-        stopName: stop.name,
-        capturedAt: new Date().toISOString(),
-        photoDataUrl,
-      });
+      setStatus("verifying");
       setSaveError(null);
-      setStatus("saved");
-    } catch {
-      setSaveError("사진을 저장할 공간이 부족합니다. 다시 촬영해 주세요.");
+      const [coordinates, image] = await Promise.all([
+        getCurrentCoordinates(),
+        photoDataUrlToFile(photoDataUrl),
+      ]);
+      const result = await verification.mutateAsync({
+        spotId,
+        latitude: coordinates.latitude,
+        longitude: coordinates.longitude,
+        image,
+      });
+
+      if (result.status === "FAIL") {
+        setStatus("captured");
+        setSaveError("촬영지 200m 이내에서 인증해 주세요.");
+        return;
+      }
+
+      try {
+        saveVisitRecord({
+          workId,
+          planId,
+          stopId: stop.id,
+          stopName: stop.name,
+          capturedAt: result.verifiedAt,
+          photoDataUrl,
+        });
+      } catch {
+        // 서버 인증은 완료되었으므로 브라우저 보조 기록 실패가 결과를 막지 않는다.
+      }
+
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: spotKeys.list(Number(workId)) }),
+        queryClient.invalidateQueries({
+          queryKey: spotKeys.detail(Number(workId), spotId),
+        }),
+      ]);
+      setVerificationResult(result);
+    } catch (error) {
+      setStatus("captured");
+      setSaveError(verificationErrorMessage(error));
     }
   };
+
+  if (verificationResult) {
+    return <VerificationResultScreen mapHref={mapHref} result={verificationResult} />;
+  }
 
   return (
     <main
@@ -188,7 +234,10 @@ export function CameraScreen({ planId, stop, workId }: CameraScreenProps) {
         {CAMERA_STATUS_MESSAGE[status] ? (
           <div className="absolute inset-0 z-10 grid place-items-center bg-black/45 px-8 text-center backdrop-blur-[2px]">
             <div>
-              <p role={status === "requesting" ? "status" : "alert"} className="text-sm leading-6 text-white">
+              <p
+                role={["requesting", "verifying"].includes(status) ? "status" : "alert"}
+                className="text-sm leading-6 text-white"
+              >
                 {CAMERA_STATUS_MESSAGE[status]}
               </p>
               {["denied", "error"].includes(status) ? (
@@ -236,24 +285,11 @@ export function CameraScreen({ planId, stop, workId }: CameraScreenProps) {
             </button>
             <button
               type="button"
-              onClick={recordVisit}
+              onClick={() => void verifyPhoto()}
               className="min-h-12 flex-[1.3] rounded-xl bg-white text-sm font-bold text-black"
             >
-              방문 기록 저장
+              인증하기
             </button>
-          </div>
-        ) : status === "saved" ? (
-          <div className="flex h-full items-center gap-4">
-            <div className="min-w-0 flex-1">
-              <strong className="block text-[16px]">방문 기록을 저장했어요</strong>
-              <p className="mt-1 truncate text-[12px] text-[#9d999a]">{stop.name}</p>
-            </div>
-            <Link
-              href={mapHref}
-              className="flex min-h-12 shrink-0 items-center rounded-xl bg-white px-5 text-sm font-bold text-black"
-            >
-              지도 보기
-            </Link>
           </div>
         ) : (
           <p className="grid h-full place-items-center text-center text-[13px] leading-5 text-[#8f8b8c]">
@@ -268,6 +304,24 @@ export function CameraScreen({ planId, stop, workId }: CameraScreenProps) {
       </section>
     </main>
   );
+}
+
+async function photoDataUrlToFile(photoDataUrl: string) {
+  const response = await fetch(photoDataUrl);
+  if (!response.ok) throw new Error("촬영한 사진을 준비하지 못했습니다.");
+  const blob = await response.blob();
+  return new File([blob], `visit-${Date.now()}.jpg`, {
+    type: blob.type || "image/jpeg",
+  });
+}
+
+function verificationErrorMessage(error: unknown) {
+  if (typeof error === "object" && error !== null && "code" in error) {
+    const code = (error as { code?: unknown }).code;
+    if (code === 1) return "방문 인증을 위해 위치 권한을 허용해 주세요.";
+    if (code === 2 || code === 3) return "현재 위치를 확인하지 못했습니다. 다시 시도해 주세요.";
+  }
+  return "방문 인증에 실패했습니다. 잠시 후 다시 시도해 주세요.";
 }
 
 function FlipCameraIcon() {

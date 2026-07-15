@@ -73,6 +73,19 @@ export async function mockBackendApi(page: Page) {
       return json(route, { content, totalElements: content.length });
     }
 
+    if (path === "/verifications" && route.request().method() === "POST") {
+      return json(route, {
+        verificationId: 101,
+        spotId: Number(url.searchParams.get("spotId")),
+        spotName: "강릉 영진 해변",
+        contentTitle: "도깨비",
+        sceneImageUrl: "/gangneung-yeongjin-beach.png",
+        verificationImageUrl: "/monthly-destination.png",
+        status: "SUCCESS",
+        verifiedAt: "2026-07-15T10:30:00Z",
+      });
+    }
+
     if (path === "/routes/recommended" && route.request().method() === "POST") {
       return json(route, {
         status: 200,

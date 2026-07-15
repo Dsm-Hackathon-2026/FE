@@ -22,14 +22,14 @@ function parseStatus(value: string): VerificationStatus {
 
 export async function verifyVisit({
   spotId,
-  userLatitude,
-  userLongitude,
+  latitude,
+  longitude,
   image,
 }: VerifyVisitRequest): Promise<VerificationResultResponse> {
   const formData = new FormData();
   formData.set("image", image);
   const value = await apiRequest(
-    `/verifications${buildQuery({ spotId, userLatitude, userLongitude })}`,
+    `/verifications${buildQuery({ spotId, latitude, longitude })}`,
     { method: "POST", body: formData },
   );
   if (!isRecord(value)) throw invalidResponse();
