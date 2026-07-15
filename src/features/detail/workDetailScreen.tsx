@@ -5,6 +5,8 @@ import { useSpots } from "@/api/spots";
 import { WorkDetailHeader } from "@/features/detail/detailHeader";
 import { WorkSummary } from "@/features/detail/detailSummary";
 import { FilmingLocationList } from "@/features/locations/filmingLocationList";
+import { buildRegionalCourses } from "@/features/locations/regional-course";
+import { RegionalCourseList } from "@/features/locations/regionalCourseList";
 
 const CONTENT_TYPE_LABEL = {
   DRAMA: "드라마",
@@ -46,6 +48,11 @@ export function WorkDetailScreen({
             CONTENT_TYPE_LABEL[detail.data.contentType],
             detail.data.country,
           ]}
+        />
+        <RegionalCourseList
+          appKey={appKey}
+          courses={buildRegionalCourses(contentId, spots.data.content)}
+          workId={String(contentId)}
         />
         <FilmingLocationList
           appKey={appKey}

@@ -136,6 +136,69 @@ export async function mockBackendApi(page: Page) {
       });
     }
 
+    if (path === "/routes/pilgrimage" && route.request().method() === "POST") {
+      return json(route, {
+        status: 200,
+        meta: {
+          start_place: "현재 위치",
+          start_address: "강원특별자치도 강릉시 용지로 176",
+          destination: null,
+          destinations: ["강릉역", "강릉 활어 횟집", "디저트 카페"],
+        },
+        course_concept: "강릉에서 만나는 도깨비 명장면 하루 코스",
+        timeline: [
+          {
+            time: "13:00 ~ 13:05",
+            place: "현재 위치",
+            activity: "추천 일정 출발",
+            address: "강원특별자치도 강릉시 용지로 176",
+            latitude: 37.7641,
+            longitude: 128.8996,
+          },
+          {
+            time: "13:05 ~ 14:05",
+            place: "강릉역",
+            activity: "첫 번째 명장면 장소 방문",
+            address: "강원특별자치도 강릉시 용지로 176",
+            latitude: 37.7641,
+            longitude: 128.8996,
+          },
+          {
+            time: "14:20 ~ 15:20",
+            place: "다경횟집",
+            activity: "지역 맛집에서 식사",
+            address: "강원특별자치도 강릉시 주문진읍 해안로 1759",
+            latitude: 37.8843,
+            longitude: 128.8293,
+          },
+          {
+            time: "15:40 ~ 16:40",
+            place: "강릉 활어 횟집",
+            activity: "두 번째 명장면 장소 방문",
+            address: "강원특별자치도 강릉시 창해로 451",
+            latitude: 37.7953,
+            longitude: 128.9182,
+          },
+          {
+            time: "17:00 ~ 18:00",
+            place: "오드커피",
+            activity: "로컬 카페에서 휴식",
+            address: "강원특별자치도 강릉시 주문진읍 해안로 1597",
+            latitude: 37.8685,
+            longitude: 128.8492,
+          },
+          {
+            time: "18:20 ~ 19:20",
+            place: "디저트 카페",
+            activity: "세 번째 명장면 장소 방문",
+            address: "강원특별자치도 강릉시 해안로 517",
+            latitude: 37.8054,
+            longitude: 128.9087,
+          },
+        ],
+      });
+    }
+
     return json(route, { status: 404, message: "테스트 API 응답이 없습니다." }, 404);
   });
 }
