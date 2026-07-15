@@ -1,23 +1,23 @@
 import Image from "next/image";
 import Link from "next/link";
 
-const DUMMY_POSTERS = [
-  { title: "도깨비", imageSrc: "/famous-drama-1.png", href: "/detail/goblin" },
-  { title: "이 사랑 통역되나요?", imageSrc: "/famous-drama-2.png" },
-  { title: "도깨비", imageSrc: "/famous-drama-1.png", href: "/detail/goblin" },
-  { title: "이 사랑 통역되나요?", imageSrc: "/famous-drama-2.png" },
-  { title: "도깨비", imageSrc: "/famous-drama-1.png", href: "/detail/goblin" },
-  { title: "이 사랑 통역되나요?", imageSrc: "/famous-drama-2.png" },
-  { title: "도깨비", imageSrc: "/famous-drama-1.png", href: "/detail/goblin" },
-  { title: "이 사랑 통역되나요?", imageSrc: "/famous-drama-2.png" },
-] as const;
+import type { ContentCardResponse } from "@/api/contents/type";
 
 type DramaPosterCarouselProps = {
   id: string;
   title: string;
+  contents?: readonly ContentCardResponse[];
+  isLoading?: boolean;
+  isError?: boolean;
 };
 
-export function DramaPosterCarousel({ id, title }: DramaPosterCarouselProps) {
+export function DramaPosterCarousel({
+  id,
+  title,
+  contents = [],
+  isLoading = false,
+  isError = false,
+}: DramaPosterCarouselProps) {
   return (
     <section aria-labelledby={`${id}-title`}>
       <h2
@@ -27,40 +27,38 @@ export function DramaPosterCarousel({ id, title }: DramaPosterCarouselProps) {
         {title}
       </h2>
 
-      <ol
-        data-testid={`${id}-list`}
-        aria-label={`${title} 목록`}
-        tabIndex={0}
-        className="mt-5 -mx-6 flex snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain scroll-smooth scroll-px-6 px-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-      >
-        {DUMMY_POSTERS.map((poster, index) => (
-          <li key={`${poster.title}-${index}`} className="h-[130px] w-[98px] shrink-0 snap-start">
-            {"href" in poster ? (
+      {isLoading ? (
+        <p role="status" className="mt-5 text-sm text-[#aeaeae]">불러오는 중...</p>
+      ) : isError ? (
+        <p role="alert" className="mt-5 text-sm text-[#aeaeae]">목록을 불러오지 못했습니다.</p>
+      ) : contents.length === 0 ? (
+        <p role="status" className="mt-5 text-sm text-[#aeaeae]">표시할 작품이 없습니다.</p>
+      ) : (
+        <ol
+          data-testid={`${id}-list`}
+          aria-label={`${title} 목록`}
+          tabIndex={0}
+          className="mt-5 -mx-6 flex snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain scroll-smooth scroll-px-6 px-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        >
+          {contents.map((content, index) => (
+            <li key={content.contentId} className="h-[130px] w-[98px] shrink-0 snap-start">
               <Link
-                href={poster.href}
-                aria-label={`${poster.title} 상세 보기`}
+                href={`/detail/${content.contentId}`}
+                aria-label={`${content.title} 상세 보기`}
                 className="block rounded-[3px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
               >
-                <Image
-                  src={poster.imageSrc}
-                  alt={`${title} ${index + 1}번째 ${poster.title} 포스터`}
-                  width={98}
-                  height={130}
-                  className="h-[130px] w-[98px] object-cover"
-                />
-              </Link>
-            ) : (
               <Image
-                src={poster.imageSrc}
-                alt={`${title} ${index + 1}번째 ${poster.title} 포스터`}
+                src={content.thumbnailUrl}
+                alt={`${title} ${index + 1}번째 ${content.title} 포스터`}
                 width={98}
                 height={130}
                 className="h-[130px] w-[98px] object-cover"
               />
-            )}
-          </li>
-        ))}
-      </ol>
+              </Link>
+            </li>
+          ))}
+        </ol>
+      )}
     </section>
   );
 }

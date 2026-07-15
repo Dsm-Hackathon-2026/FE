@@ -1,6 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 
+import { QueryProvider } from "@/app/queryProvider";
+import { LandingIntro } from "@/features/landing/landingIntro";
+
 import "./globals.css";
 
 const APP_NAME = "성덕순례";
@@ -14,6 +17,10 @@ export const metadata: Metadata = {
     template: `%s | ${APP_NAME}`,
   },
   description: APP_DESCRIPTION,
+  icons: {
+    icon: [{ url: "/landing-icon.svg", type: "image/svg+xml" }],
+    shortcut: ["/landing-icon.svg"],
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black",
@@ -33,7 +40,12 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
   return (
     <html lang="ko">
-      <body>{children}</body>
+      <body>
+        <QueryProvider>
+          {children}
+          <LandingIntro />
+        </QueryProvider>
+      </body>
     </html>
   );
 }
