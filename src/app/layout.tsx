@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 
 import { QueryProvider } from "@/app/queryProvider";
 import { LandingIntro } from "@/features/landing/landingIntro";
+import { I18nProvider } from "@/i18n/provider";
 
 import "./globals.css";
 
@@ -41,10 +42,12 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
   return (
     <html lang="ko">
       <body>
-        <QueryProvider>
-          {children}
-          <LandingIntro />
-        </QueryProvider>
+        <I18nProvider>
+          <QueryProvider>
+            {children}
+            <LandingIntro />
+          </QueryProvider>
+        </I18nProvider>
       </body>
     </html>
   );
