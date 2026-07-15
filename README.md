@@ -63,6 +63,6 @@ pnpm exec playwright install chromium
 ## 디자인 확정 후 할 일
 
 1. `src/app/layout.tsx`와 `src/app/manifest.ts`의 프로젝트명, 설명, 테마 색상을 실제 값으로 교체합니다.
-2. `src/app/icon.svg`를 확정된 앱 아이콘 세트로 교체합니다.
+2. `public/landing-icon.svg`를 확정된 앱 아이콘 세트로 교체합니다.
 3. 디자인 토큰과 공통 UI 컴포넌트를 정의한 뒤 화면 퍼블리싱을 시작합니다.
 4. 필요할 때만 API 상태 관리, 폼, 인증, 테스트 도구를 선정합니다.

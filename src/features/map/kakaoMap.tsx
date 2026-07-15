@@ -5,20 +5,26 @@ import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "re
 import type { ItineraryStop } from "@/features/itineraries/itinerary";
 import {
   type KakaoItineraryMapController,
+  type MapCoordinates,
   loadKakaoMaps,
   mountKakaoItineraryMap,
 } from "@/features/map/kakao-map";
 
 type KakaoMapProps = {
   appKey?: string;
+  onManualInteraction?: () => void;
   stops: readonly ItineraryStop[];
 };
 
-export type RouteFollowStage = "current-location" | "departure";
-export type RouteFollowResult = "ready" | "location-unavailable" | "map-unavailable";
-
 export type KakaoMapHandle = {
-  startRouteFollow(onStage: (stage: RouteFollowStage) => void): Promise<RouteFollowResult>;
+  focusCurrentPosition(coordinates: MapCoordinates): void;
+  focusDeparture(): void;
+  updateCurrentPosition(coordinates: MapCoordinates, followCamera: boolean): void;
+  updateRouteProgress(
+    activeStopIndex: number,
+    coordinates?: MapCoordinates,
+    rerouted?: boolean,
+  ): void;
 };
 
 const PIN_COLORS = ["#ffffff", "#8f62f7", "#8f62f7", "#f78562", "#62aaf7"];
@@ -39,12 +45,18 @@ function toPreviewPoints(stops: readonly ItineraryStop[]) {
   }));
 }
 
-function MapPreview({ stops }: Pick<KakaoMapProps, "stops">) {
+function MapPreview({ onManualInteraction, stops }: KakaoMapProps) {
   const points = toPreviewPoints(stops);
   const path = points.map((point) => `${point.x},${point.y}`).join(" ");
 
   return (
-    <div className="map-preview" data-testid="map-preview" aria-label="지도 미리보기">
+    <div
+      className="map-preview"
+      data-testid="map-preview"
+      aria-label="지도 미리보기"
+      onPointerDownCapture={onManualInteraction}
+      onWheelCapture={onManualInteraction}
+    >
       <svg viewBox="0 0 100 100" className="absolute inset-0 size-full" aria-hidden="true">
         <path d="M-10 24 C18 6 35 39 112 11 M-8 61 C25 42 64 71 108 48 M12 108 C30 62 71 46 97 -8" />
         <path d="M-10 82 C29 66 45 91 110 72 M34 -8 C23 30 56 58 49 108" />
@@ -74,63 +86,32 @@ function MapPreview({ stops }: Pick<KakaoMapProps, "stops">) {
   );
 }
 
-function getCurrentCoordinates() {
-  return new Promise<{ latitude: number; longitude: number }>((resolve, reject) => {
-    if (!navigator.geolocation) {
-      reject(new Error("현재 위치를 지원하지 않는 브라우저입니다."));
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-      ({ coords }) => resolve({ latitude: coords.latitude, longitude: coords.longitude }),
-      reject,
-      { enableHighAccuracy: true, timeout: 10_000, maximumAge: 15_000 },
-    );
-  });
-}
-
-function waitForDepartureTransition() {
-  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-    return Promise.resolve();
-  }
-
-  return new Promise<void>((resolve) => window.setTimeout(resolve, 1_400));
-}
-
 export const KakaoMap = forwardRef<KakaoMapHandle, KakaoMapProps>(function KakaoMap(
-  { appKey, stops },
+  { appKey, onManualInteraction, stops },
   ref,
 ) {
   const mapRef = useRef<HTMLDivElement>(null);
   const controllerRef = useRef<KakaoItineraryMapController | null>(null);
-  const followSequenceRef = useRef(0);
   const [loadFailed, setLoadFailed] = useState(false);
   const [mapReady, setMapReady] = useState(false);
 
   useImperativeHandle(ref, () => ({
-    async startRouteFollow(onStage) {
-      const controller = controllerRef.current;
-      if (!controller) return "map-unavailable";
-
-      const sequence = followSequenceRef.current + 1;
-      followSequenceRef.current = sequence;
-      const shouldAnimate = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-      try {
-        const coordinates = await getCurrentCoordinates();
-        if (sequence !== followSequenceRef.current) return "map-unavailable";
-        controller.focusCurrentPosition(coordinates, shouldAnimate);
-        onStage("current-location");
-        await waitForDepartureTransition();
-        if (sequence !== followSequenceRef.current) return "map-unavailable";
-        controller.focusDeparture(shouldAnimate);
-        onStage("departure");
-        return "ready";
-      } catch {
-        controller.focusDeparture(shouldAnimate);
-        onStage("departure");
-        return "location-unavailable";
-      }
+    focusCurrentPosition(coordinates) {
+      controllerRef.current?.focusCurrentPosition(
+        coordinates,
+        !window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+      );
+    },
+    focusDeparture() {
+      controllerRef.current?.focusFallbackDeparture(
+        !window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+      );
+    },
+    updateCurrentPosition(coordinates, followCamera) {
+      controllerRef.current?.updateCurrentPosition(coordinates, followCamera);
+    },
+    updateRouteProgress(activeStopIndex, coordinates, rerouted) {
+      controllerRef.current?.updateRouteProgress(activeStopIndex, coordinates, rerouted);
     },
   }), []);
 
@@ -155,13 +136,14 @@ export const KakaoMap = forwardRef<KakaoMapHandle, KakaoMapProps>(function Kakao
 
     return () => {
       isCancelled = true;
-      followSequenceRef.current += 1;
       controllerRef.current = null;
       dispose?.();
     };
   }, [appKey, stops]);
 
-  if (!appKey || loadFailed) return <MapPreview stops={stops} />;
+  if (!appKey || loadFailed) {
+    return <MapPreview stops={stops} onManualInteraction={onManualInteraction} />;
+  }
 
   return (
     <div
@@ -170,6 +152,8 @@ export const KakaoMap = forwardRef<KakaoMapHandle, KakaoMapProps>(function Kakao
       data-testid="kakao-map"
       data-map-ready={mapReady}
       aria-label="일정 지도"
+      onPointerDownCapture={onManualInteraction}
+      onWheelCapture={onManualInteraction}
     />
   );
 });

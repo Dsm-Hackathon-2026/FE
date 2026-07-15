@@ -1,26 +1,25 @@
 import { notFound } from "next/navigation";
 
-import { GOBLIN_GANGNEUNG_ITINERARY } from "@/features/itineraries/itinerary";
-import { MapScreen } from "@/features/map/mapScreen";
+import { MapData } from "@/features/map/mapData";
 
 type MapPageProps = {
   params: Promise<{ workId: string }>;
-  searchParams: Promise<{ location?: string | string[] }>;
+  searchParams: Promise<{ plan?: string | string[] }>;
 };
 
 export default async function MapPage({ params, searchParams }: MapPageProps) {
   const [{ workId }, query] = await Promise.all([params, searchParams]);
+  const contentId = Number(workId);
 
-  if (workId !== "goblin") notFound();
+  if (!Number.isSafeInteger(contentId) || contentId <= 0) notFound();
 
-  const initialStopId = typeof query.location === "string" ? query.location : undefined;
+  const planId = typeof query.plan === "string" ? query.plan : undefined;
 
   return (
-    <MapScreen
+    <MapData
       appKey={process.env.NEXT_PUBLIC_KAKAO_MAP_APP_KEY}
-      itinerary={GOBLIN_GANGNEUNG_ITINERARY}
-      initialStopId={initialStopId}
-      workId={workId}
+      contentId={contentId}
+      planId={planId}
     />
   );
 }

@@ -28,6 +28,7 @@ src/
 ```text
 src/
 ├── app/          # 라우팅과 화면 조합
+├── api/          # HTTP 계약 타입, 응답 검증, TanStack Query 연동
 ├── features/     # 작품 탐색, 촬영지, 일정 등 기능별 UI와 로직
 ├── components/   # 여러 기능에서 재사용하는 표현 컴포넌트
 └── lib/          # 프레임워크 독립적인 공통 코드와 외부 연동 경계
@@ -46,6 +47,7 @@ src/
 ## Planned integration boundaries
 
 - 프론트엔드는 백엔드 저장 구조에 직접 의존하지 않고 명시적인 HTTP API 계약을 사용한다.
+- 브라우저 API 요청은 `/backend-api` 경로를 사용하며 Next.js가 `API_BASE_URL`로 프록시한다.
 - 백엔드 응답은 API 경계에서 검증한 뒤 도메인 타입으로 변환한다.
 - 작품, 촬영지, 주변 장소, 일정 기능은 각각 독립적인 feature 경계를 갖는다.
 - AI 일정 생성은 요청, 진행, 성공, 부분 결과, 실패, 재시도 상태를 명시적으로 모델링한다.

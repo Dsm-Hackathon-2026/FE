@@ -1,12 +1,13 @@
 import Image from "next/image";
 
-import type { WorkDetail } from "@/features/detail/detail";
 import { WorkDescription } from "@/features/detail/detailDescription";
 
-type WorkSummaryProps = Pick<
-  WorkDetail,
-  "title" | "description" | "posterSrc" | "metadata"
->;
+type WorkSummaryProps = {
+  title: string;
+  description: string;
+  posterSrc: string;
+  metadata: readonly string[];
+};
 
 export function WorkSummary({
   title,
